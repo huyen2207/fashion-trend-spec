@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プロジェクト仕様書・要件定義</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+
+  <header class="site-header">
+    <button class="menu-toggle" id="menuToggle" aria-label="目次を開く" aria-expanded="false" aria-controls="toc">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="header-inner">
+      <p class="eyebrow">プロジェクト仕様書・要件定義</p>
+      <h1>ファッショントレンド・コーディネート支援Webアプリ</h1>
+      <dl class="meta">
+        <div><dt>プロジェクト名</dt><dd>（仮）ファッショントレンド・コーディネート支援Webアプリ</dd></div>
+        <div><dt>作成日</dt><dd>2026年9月18日</dd></div>
+        <div><dt>版数</dt><dd>v0.1（ドラフト）</dd></div>
+      </dl>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" id="toc" aria-label="目次">
+      <p class="toc-title">目次</p>
+      <ol>
+        <li><a href="#sec1">1. 概要</a></li>
+        <li><a href="#sec2">2. 背景・目的</a></li>
+        <li><a href="#sec3">3. 対象ユーザー</a></li>
+        <li><a href="#sec4">4. 対象ユーザーの抱える悩み・課題</a></li>
+        <li><a href="#sec5">5. 今回のプロジェクトで解決すること</a></li>
+      </ol>
+    </nav>
+    <div class="overlay" id="overlay"></div>
+
+    <main class="content">
+
+      <!-- 1. 概要 -->
+      <section id="sec1">
+        <h2><span class="num">1</span>概要</h2>
+        <p>本プロジェクトは、20〜40代の女性を対象とした <strong>ファッショントレンド情報・コーディネート提案Webアプリ</strong> を開発するものである。</p>
+        <p>ユーザーは本アプリを通じて、以下のことができる。</p>
+        <ul>
+          <li><strong>毎日更新される最新のファッショントレンド</strong> を閲覧できる</li>
+          <li>トレンドごとの <strong>コーディネート画像・着こなし例</strong> を見て、具体的な着方をイメージできる</li>
+          <li>トレンドアイテムを取り扱う <strong>ショップ（アパレルブランド・ECサイト）</strong> の情報を確認できる</li>
+          <li>気に入ったアイテムの <strong>商品ページ・購入リンク</strong> へそのまま移動し、注文できる</li>
+        </ul>
+        <div class="flow" aria-label="トレンドを知る、着こなしを学ぶ、実際に買う">
+          <span>トレンドを知る</span><span class="arrow">→</span>
+          <span>着こなしを学ぶ</span><span class="arrow">→</span>
+          <span>実際に買う</span>
+        </div>
+        <p>「トレンドを知る → 着こなしを学ぶ → 実際に買う」までを1つのアプリで完結させ、ファッションに詳しくない人でも、無理なく「おしゃれで、自分らしいセンスのある装い」ができるように支援する。</p>
+      </section>
+
+      <!-- 2. 背景・目的 -->
+      <section id="sec2">
+        <h2><span class="num">2</span>背景・目的</h2>
+        <h3>背景</h3>
+        <ul>
+          <li>SNS（Instagram・TikTok・Pinterest など）の普及により、ファッショントレンドの移り変わりがこれまで以上に速くなっている。</li>
+          <li>一方で、情報があちこちに散らばっており、「今、何が本当に流行っているのか」「自分にはどう取り入れればよいのか」が分かりにくい。</li>
+          <li>ファッション雑誌を購読する人は減っており、トレンドを体系的にまとめて知る手段が少なくなっている。</li>
+          <li>仕事・家事・育児などで忙しい20〜40代の女性は、トレンドを自分で調べて比較する時間が取れない。</li>
+          <li>「トレンド情報」と「商品を買える場所」が別々のサービスに分かれているため、見つけた服を探して買うまでに手間がかかる。</li>
+        </ul>
+        <h3>目的</h3>
+        <ol class="goals">
+          <li><strong>トレンド情報の集約</strong>：日々変わるファッショントレンドを、1か所で分かりやすくまとめて届ける。</li>
+          <li><strong>コーディネート力の向上</strong>：画像や着こなし例を通じて、「どう組み合わせれば良いか」を直感的に理解できるようにする。</li>
+          <li><strong>購入までの導線をスムーズにする</strong>：トレンドアイテムからショップ・商品ページへ直接つなぎ、「欲しい」から「買う」までの手間をなくす。</li>
+          <li><strong>自信を持っておしゃれを楽しめる女性を増やす</strong>：ファッションに苦手意識を持つ人でも、流行を取り入れた自分らしい装いを楽しめるようにする。</li>
+        </ol>
+      </section>
+
+      <!-- 3. 対象ユーザー -->
+      <section id="sec3">
+        <h2><span class="num">3</span>対象ユーザー</h2>
+        <h3>メインターゲット</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>項目</th><th>内容</th></tr></thead>
+            <tbody>
+              <tr><td>性別</td><td>女性</td></tr>
+              <tr><td>年齢</td><td>20〜40歳</td></tr>
+              <tr><td>特徴</td><td>おしゃれをしたい・センスのある人に見られたい気持ちはあるが、コーディネートに自信がない</td></tr>
+              <tr><td>情報収集</td><td>スマートフォン中心（SNS・Webサイト）</td></tr>
+              <tr><td>購買行動</td><td>ECサイトでの購入に慣れている</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>ペルソナ例</h3>
+        <div class="cards">
+          <article class="card">
+            <p class="card-label">ペルソナA</p>
+            <h4>社会人2〜3年目の会社員（25歳）</h4>
+            <ul>
+              <li>通勤服・休日服ともに「なんとなく無難」な服を選びがち。</li>
+              <li>SNSでおしゃれな人を見ると憧れるが、同じアイテムをどこで買えばいいか分からない。</li>
+              <li>通勤中などのすき間時間にスマホで情報を見たい。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <p class="card-label">ペルソナB</p>
+            <h4>子育て中のワーキングマザー（35歳）</h4>
+            <ul>
+              <li>仕事と育児で忙しく、トレンドを調べる時間がない。</li>
+              <li>「若作り」に見えず、年齢に合った今っぽい服装をしたい。</li>
+              <li>店舗に行く時間がないため、ネットでそのまま買えると助かる。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <p class="card-label">ペルソナC</p>
+            <h4>ファッションが好きだが、トレンドに追いつけない人（30歳）</h4>
+            <ul>
+              <li>服は好きだが、流行の変化が速くて情報を追い切れない。</li>
+              <li>毎日少しずつ最新情報をチェックできる場所がほしい。</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- 4. 対象ユーザーの抱える悩み・課題 -->
+      <section id="sec4">
+        <h2><span class="num">4</span>対象ユーザーの抱える悩み・課題</h2>
+        <div class="issues">
+          <article class="issue">
+            <h3><span class="badge">①</span>コーディネートの仕方が分からない</h3>
+            <ul>
+              <li>アイテム単体では良いと思っても、何と合わせれば良いか分からない。</li>
+              <li>手持ちの服とどう組み合わせればトレンド感が出るのか分からない。</li>
+              <li>結果として、毎日同じような服装になってしまう。</li>
+            </ul>
+          </article>
+          <article class="issue">
+            <h3><span class="badge">②</span>最新のトレンドを把握できていない</h3>
+            <ul>
+              <li>トレンドの変化が速く、今何が流行っているのか分からない。</li>
+              <li>情報がSNS・雑誌・ECサイトなどに分散していて、まとめて知る手段がない。</li>
+              <li>仕事・家事・育児などで忙しく、自分で調べる時間がない。</li>
+            </ul>
+          </article>
+          <article class="issue">
+            <h3><span class="badge">③</span>自分に合うかどうか判断できない</h3>
+            <ul>
+              <li>流行っているアイテムでも、自分の年齢・体型・ライフスタイルに合うか分からない。</li>
+              <li>「頑張りすぎ」「若作り」に見えないか不安で、取り入れるのをためらってしまう。</li>
+            </ul>
+          </article>
+          <article class="issue">
+            <h3><span class="badge">④</span>欲しい服をどこで買えばいいか分からない</h3>
+            <ul>
+              <li>SNSや街で見かけた服が、どのブランド・ショップのものか分からない。</li>
+              <li>似たアイテムを探すのに時間がかかり、結局あきらめてしまう。</li>
+              <li>価格帯や購入先を比較するのが面倒。</li>
+            </ul>
+          </article>
+          <article class="issue">
+            <h3><span class="badge">⑤</span>買い物で失敗したくない</h3>
+            <ul>
+              <li>流行っていると思って買った服が、すぐに流行遅れになった経験がある。</li>
+              <li>着回しができず、「一度しか着ていない服」が増えてしまう。</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- 5. 今回のプロジェクトで解決すること -->
+      <section id="sec5">
+        <h2><span class="num">5</span>今回のプロジェクトで解決すること</h2>
+        <div class="table-wrap">
+          <table class="solution-table">
+            <thead><tr><th>#</th><th>ユーザーの課題</th><th>本アプリでの解決策</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>トレンドが分からない・調べる時間がない</td><td><strong>毎日更新されるトレンド情報</strong> を1か所に集約し、スマホで手軽にチェックできるようにする</td></tr>
+              <tr><td>2</td><td>コーディネートの仕方が分からない</td><td>トレンドごとに <strong>コーディネート画像・着こなし例</strong> を掲載し、具体的な組み合わせ方を提示する</td></tr>
+              <tr><td>3</td><td>自分に合うか判断できない</td><td><strong>年代・シーン（通勤／休日／デートなど）・テイスト別</strong> にトレンドやコーデを絞り込めるようにする</td></tr>
+              <tr><td>4</td><td>どこで買えばいいか分からない</td><td>トレンドアイテムごとに <strong>取り扱いショップ情報と商品購入リンク</strong> を掲載し、そのまま注文ページへ移動できるようにする</td></tr>
+              <tr><td>5</td><td>買い物で失敗したくない</td><td>トレンドの <strong>注目度・旬の時期・着回しのポイント</strong> を合わせて紹介し、納得して購入できるようにする</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>本プロジェクトで実現する主な機能（MVP）</h3>
+        <div class="features">
+          <div class="feature">
+            <h4><span class="feature-num">1</span>トレンド一覧・詳細ページ</h4>
+            <ul>
+              <li>毎日更新される最新トレンドの一覧表示</li>
+              <li>トレンドの説明、注目ポイント、関連画像の表示</li>
+            </ul>
+          </div>
+          <div class="feature">
+            <h4><span class="feature-num">2</span>コーディネート紹介</h4>
+            <ul>
+              <li>トレンドを取り入れたコーディネート画像と解説</li>
+              <li>シーン別・テイスト別・年代別の絞り込み</li>
+            </ul>
+          </div>
+          <div class="feature">
+            <h4><span class="feature-num">3</span>ショップ・商品情報</h4>
+            <ul>
+              <li>トレンドアイテムを取り扱うショップの紹介</li>
+              <li>商品ページ（ECサイト）への購入リンク</li>
+            </ul>
+          </div>
+          <div class="feature">
+            <h4><span class="feature-num">4</span>お気に入り機能</h4>
+            <ul>
+              <li>気になるトレンド・コーデ・アイテムを保存して後から見返せる</li>
+            </ul>
+          </div>
+          <div class="feature">
+            <h4><span class="feature-num">5</span>検索機能</h4>
+            <ul>
+              <li>キーワード・アイテム種類・色・価格帯などで検索できる</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>今回のスコープ外（将来の拡張候補）</h3>
+        <ul class="out-of-scope">
+          <li>アプリ内での直接決済機能</li>
+          <li>AIによる手持ち服を使ったコーディネート提案</li>
+          <li>ユーザー同士のコーデ投稿・コミュニティ機能</li>
+          <li>体型診断・パーソナルカラー診断との連携</li>
+          <li>ネイティブアプリ（iOS／Android）版の提供</li>
+        </ul>
+
+        <h3>期待する成果</h3>
+        <ul class="outcomes">
+          <li>ユーザーが <strong>「今日から真似できる」</strong> トレンドコーデを毎日手軽に見つけられる。</li>
+          <li>トレンド情報収集からアイテム購入までの時間と手間を大幅に減らせる。</li>
+          <li>ファッションに自信のなかった女性が、<strong>自分らしく、トレンドを取り入れたおしゃれを楽しめる</strong> ようになる。</li>
+        </ul>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <p>プロジェクト仕様書・要件定義 v0.1（ドラフト）｜2026年9月18日</p>
+  </footer>
+
+  <button class="to-top" id="toTop" aria-label="ページ上部へ戻る">↑</button>
+
+</body>
+</html>
