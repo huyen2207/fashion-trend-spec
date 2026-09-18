@@ -1,4 +1,4 @@
-/* ===== Màu sắc & font ===== */
+/* ===== カラー・フォント ===== */
 :root {
   --bg: #faf6f3;
   --surface: #ffffff;
@@ -10,8 +10,8 @@
   --accent: #b0707a;
   --accent-soft: #f6e4e6;
   --dark: #221c1b;
-  --serif: "Playfair Display", "Times New Roman", serif;
-  --sans: "Be Vietnam Pro", "Helvetica Neue", Arial, sans-serif;
+  --serif: "Cormorant Garamond", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --sans: "Zen Kaku Gothic New", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
   --script: "Allura", "Snell Roundhand", cursive;
   --radius: 14px;
   --shadow: 0 6px 24px rgba(60, 35, 30, 0.07);
@@ -35,7 +35,10 @@ body {
   color: var(--text);
   font-family: var(--sans);
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+  line-break: strict;
+  word-break: auto-phrase;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -75,9 +78,33 @@ h2,
 h3,
 h4 {
   font-family: var(--serif);
-  font-weight: 500;
-  line-height: 1.25;
+  font-weight: 600;
+  line-height: 1.45;
   margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+.quote-main {
+  font-variant-numeric: lining-nums;
+}
+
+/* 見出しの上に英字ラベル */
+.section-head h2,
+.shops h2 {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+h2 small {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  color: var(--accent);
+  line-height: 1.6;
 }
 
 .container {
@@ -87,7 +114,7 @@ h4 {
   padding: 0 24px;
 }
 
-/* ===== Nút ===== */
+/* ===== ボタン ===== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -217,7 +244,7 @@ h4 {
 }
 
 .logo-tag {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--muted);
   margin-top: 4px;
   letter-spacing: 0.04em;
@@ -367,9 +394,9 @@ h4 {
 }
 
 .hero-title {
-  font-size: clamp(36px, 5.4vw, 64px);
-  font-weight: 400;
-  line-height: 1.12;
+  font-size: clamp(32px, 4.6vw, 56px);
+  font-weight: 600;
+  line-height: 1.35;
   margin-bottom: 18px;
 }
 
@@ -423,7 +450,7 @@ h4 {
   background: #fff;
 }
 
-/* ===== Features ===== */
+/* ===== 特徴 ===== */
 .features {
   position: relative;
   z-index: 5;
@@ -442,6 +469,12 @@ h4 {
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
+}
+
+.features li > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .features b {
@@ -472,7 +505,7 @@ h4 {
   height: 22px;
 }
 
-/* ===== Section chung ===== */
+/* ===== セクション共通 ===== */
 .section {
   padding: 64px 0 8px;
 }
@@ -513,7 +546,7 @@ h4 {
   border-radius: var(--radius);
 }
 
-/* ===== Chip & bộ lọc ===== */
+/* ===== チップ・絞り込み ===== */
 .filters {
   display: flex;
   align-items: center;
@@ -576,7 +609,7 @@ h4 {
   font-size: 13px;
 }
 
-/* ===== Nút yêu thích (trái tim) ===== */
+/* ===== お気に入り（ハート） ===== */
 .heart {
   display: inline-flex;
   align-items: center;
@@ -615,7 +648,7 @@ h4 {
   }
 }
 
-/* ===== Xu hướng ===== */
+/* ===== トレンド ===== */
 .trend-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -712,7 +745,7 @@ h4 {
   color: var(--muted);
 }
 
-/* ===== Hoàn cảnh (scene tabs) ===== */
+/* ===== シーンタブ ===== */
 .scene-tabs {
   display: flex;
   gap: 8px;
@@ -759,7 +792,7 @@ h4 {
   font-weight: 500;
 }
 
-/* ===== Bộ phối ===== */
+/* ===== コーデ ===== */
 .outfit-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -852,8 +885,9 @@ h4 {
 .quote-main {
   margin: 0;
   font-family: var(--serif);
-  font-size: clamp(22px, 2.5vw, 30px);
-  line-height: 1.4;
+  font-size: clamp(22px, 2.4vw, 30px);
+  font-weight: 600;
+  line-height: 1.7;
 }
 
 .quote-sign {
@@ -871,7 +905,7 @@ h4 {
   object-fit: cover;
 }
 
-/* ===== Sản phẩm ===== */
+/* ===== アイテム ===== */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -973,7 +1007,7 @@ h4 {
 
 .shop-list {
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
+  grid-template-columns: repeat(9, 1fr);
   gap: 14px;
   margin: 24px 0 0;
   padding: 0;
@@ -992,14 +1026,17 @@ h4 {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  height: 72px;
+  width: 84px;
+  height: 84px;
+  padding: 6px;
   border-radius: 50%;
   background: #fff;
   font-family: var(--serif);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-align: center;
+  letter-spacing: 0.02em;
   box-shadow: var(--shadow);
   transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -1014,7 +1051,7 @@ h4 {
   color: var(--muted);
 }
 
-/* ===== Bài viết ===== */
+/* ===== コラム ===== */
 .post-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1066,7 +1103,7 @@ h4 {
   font-size: 11px;
 }
 
-/* ===== Cộng đồng ===== */
+/* ===== コミュニティ ===== */
 .community {
   display: grid;
   grid-template-columns: 0.8fr 1.4fr;
@@ -1626,6 +1663,7 @@ mark {
 
   .shop-list {
     grid-template-columns: repeat(5, 1fr);
+    row-gap: 20px;
   }
 
   .footer-inner {
@@ -1815,9 +1853,9 @@ mark {
   }
 
   .shop-logo {
-    width: 64px;
-    height: 64px;
-    font-size: 12px;
+    width: 72px;
+    height: 72px;
+    font-size: 11px;
   }
 
   .community-gallery {

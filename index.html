@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StyleHer – Đẹp hơn mỗi ngày</title>
-  <meta name="description" content="StyleHer: cập nhật xu hướng thời trang mỗi ngày, gợi ý phối đồ theo hoàn cảnh và link mua hàng từ các shop uy tín dành cho phụ nữ 20–40 tuổi.">
+  <title>StyleHer｜毎日のトレンドとコーデ提案</title>
+  <meta name="description" content="StyleHer（スタイルハー）は、20〜40代の女性のためのファッション情報サイト。毎日更新のトレンド、シーン別コーデ、人気ショップの購入リンクをまとめてお届けします。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Allura&family=Be+Vietnam+Pro:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@500;600&family=Shippori+Mincho:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="data.js" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
 
-  <!-- ===== Bộ icon SVG ===== -->
+  <!-- ===== SVGアイコン ===== -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
       <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
@@ -45,37 +45,37 @@
     </defs>
   </svg>
 
-  <!-- ===== Header ===== -->
+  <!-- ===== ヘッダー ===== -->
   <header class="header" id="top">
     <div class="container header-inner">
-      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Mở menu" aria-expanded="false" aria-controls="mainNav">
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="メニューを開く" aria-expanded="false" aria-controls="mainNav">
         <svg><use href="#i-menu"/></svg>
       </button>
 
-      <a class="logo" href="#top" aria-label="StyleHer – Trang chủ">
+      <a class="logo" href="#top" aria-label="StyleHer ホーム">
         <span class="logo-name">StyleHer</span>
-        <span class="logo-tag">Đẹp hơn mỗi ngày</span>
+        <span class="logo-tag">毎日、もっと私らしく</span>
       </a>
 
-      <nav class="nav" id="mainNav" aria-label="Menu chính">
-        <a href="#top" class="active">Trang chủ</a>
-        <a href="#trends">Xu hướng</a>
-        <a href="#outfits">Gợi ý phối đồ</a>
-        <a href="#products">Shop</a>
-        <a href="#blog">Blog</a>
-        <a href="#community">Cộng đồng</a>
+      <nav class="nav" id="mainNav" aria-label="メインメニュー">
+        <a href="#top" class="active">ホーム</a>
+        <a href="#trends">トレンド</a>
+        <a href="#outfits">コーデ提案</a>
+        <a href="#products">アイテム</a>
+        <a href="#blog">コラム</a>
+        <a href="#community">コミュニティ</a>
       </nav>
 
       <form class="search" id="searchForm" role="search">
         <svg class="search-icon"><use href="#i-search"/></svg>
-        <input type="search" id="searchInput" placeholder="Tìm kiếm xu hướng, sản phẩm, shop..." aria-label="Tìm kiếm" autocomplete="off">
+        <input type="search" id="searchInput" placeholder="トレンド・アイテム・ショップを検索" aria-label="サイト内検索" autocomplete="off">
       </form>
 
       <div class="header-actions">
-        <button class="icon-btn search-toggle" id="searchToggle" aria-label="Tìm kiếm">
+        <button class="icon-btn search-toggle" id="searchToggle" aria-label="検索">
           <svg><use href="#i-search"/></svg>
         </button>
-        <button class="icon-btn fav-btn" id="favBtn" aria-label="Danh sách yêu thích">
+        <button class="icon-btn fav-btn" id="favBtn" aria-label="お気に入り">
           <svg><use href="#i-heart"/></svg>
           <span class="badge" id="favCount" hidden>0</span>
         </button>
@@ -84,59 +84,59 @@
   </header>
 
   <main>
-    <!-- ===== Hero ===== -->
-    <section class="hero" aria-label="Giới thiệu">
+    <!-- ===== メインビジュアル ===== -->
+    <section class="hero" aria-label="メインビジュアル">
       <div class="hero-slides" id="heroSlides"></div>
       <div class="container hero-content">
         <p class="hero-date" id="heroDate"></p>
         <h1 class="hero-title" id="heroTitle"></h1>
         <p class="hero-text" id="heroText"></p>
-        <a href="#trends" class="btn btn-light">Khám phá ngay <svg><use href="#i-arrow"/></svg></a>
+        <a href="#trends" class="btn btn-light">トレンドを見る <svg><use href="#i-arrow"/></svg></a>
       </div>
       <p class="hero-script" aria-hidden="true">Good<br>Outfit<br>Brighter<br>Mood</p>
       <div class="hero-controls">
-        <button class="round-btn" id="heroPrev" aria-label="Ảnh trước"><svg><use href="#i-prev"/></svg></button>
+        <button class="round-btn" id="heroPrev" aria-label="前の画像"><svg><use href="#i-prev"/></svg></button>
         <div class="hero-dots" id="heroDots"></div>
-        <button class="round-btn" id="heroNext" aria-label="Ảnh sau"><svg><use href="#i-next"/></svg></button>
+        <button class="round-btn" id="heroNext" aria-label="次の画像"><svg><use href="#i-next"/></svg></button>
       </div>
     </section>
 
-    <!-- ===== 4 giá trị chính ===== -->
+    <!-- ===== 4つの特徴 ===== -->
     <div class="container">
       <ul class="features">
-        <li><span class="feature-icon"><svg><use href="#i-trend"/></svg></span><div><b>Cập nhật xu hướng mỗi ngày</b><span>Không bỏ lỡ bất kỳ trend nào</span></div></li>
-        <li><span class="feature-icon"><svg><use href="#i-hanger"/></svg></span><div><b>Gợi ý phối đồ theo phong cách</b><span>Phù hợp với bạn</span></div></li>
-        <li><span class="feature-icon"><svg><use href="#i-bag"/></svg></span><div><b>Khám phá nhiều shop uy tín</b><span>Link mua hàng trực tiếp</span></div></li>
-        <li><span class="feature-icon"><svg><use href="#i-users"/></svg></span><div><b>Cộng đồng yêu thời trang</b><span>Chia sẻ &amp; truyền cảm hứng</span></div></li>
+        <li><span class="feature-icon"><svg><use href="#i-trend"/></svg></span><div><b>トレンドを毎日更新</b><span>最新の流行をすぐチェック</span></div></li>
+        <li><span class="feature-icon"><svg><use href="#i-hanger"/></svg></span><div><b>シーン別コーデ提案</b><span>年代・テイストで選べる</span></div></li>
+        <li><span class="feature-icon"><svg><use href="#i-bag"/></svg></span><div><b>人気ショップをまとめて</b><span>購入ページへすぐ移動</span></div></li>
+        <li><span class="feature-icon"><svg><use href="#i-users"/></svg></span><div><b>おしゃれコミュニティ</b><span>コーデをシェアしよう</span></div></li>
       </ul>
     </div>
 
-    <!-- ===== Xu hướng nổi bật ===== -->
+    <!-- ===== 注目のトレンド ===== -->
     <section class="section" id="trends">
       <div class="container">
         <div class="section-head">
           <div>
-            <h2>Xu hướng nổi bật</h2>
+            <h2>注目のトレンド<small>TREND</small></h2>
             <p class="section-sub" id="trendUpdated"></p>
           </div>
-          <div class="filter-inline" role="group" aria-label="Lọc xu hướng theo độ tuổi" id="trendAgeFilter"></div>
+          <div class="filter-inline" role="group" aria-label="年代で絞り込む" id="trendAgeFilter"></div>
         </div>
         <div class="trend-grid" id="trendGrid"></div>
       </div>
     </section>
 
-    <!-- ===== Gợi ý phối đồ theo hoàn cảnh ===== -->
+    <!-- ===== シーン別コーデ ===== -->
     <section class="section" id="outfits">
       <div class="container">
         <div class="section-head">
-          <h2>Gợi ý phối đồ theo hoàn cảnh</h2>
-          <button class="link-btn" id="outfitReset">Xem tất cả <svg><use href="#i-arrow"/></svg></button>
+          <h2>シーン別コーデ<small>COORDINATE</small></h2>
+          <button class="link-btn" id="outfitReset">すべて見る <svg><use href="#i-arrow"/></svg></button>
         </div>
-        <div class="scene-tabs" role="tablist" aria-label="Chọn hoàn cảnh" id="sceneTabs"></div>
+        <div class="scene-tabs" role="tablist" aria-label="シーンを選ぶ" id="sceneTabs"></div>
         <div class="filters">
-          <div class="chip-group" role="group" aria-label="Độ tuổi" id="ageChips"></div>
+          <div class="chip-group" role="group" aria-label="年代" id="ageChips"></div>
           <label class="select-wrap">
-            <span>Phong cách</span>
+            <span>テイスト</span>
             <select id="tasteSelect"></select>
           </label>
         </div>
@@ -144,108 +144,108 @@
       </div>
     </section>
 
-    <!-- ===== Câu chuyện thương hiệu ===== -->
+    <!-- ===== ブランドメッセージ ===== -->
     <section class="container">
       <div class="quote">
         <div class="quote-text">
-          <p class="quote-main">“Thời trang không chỉ là quần áo, mà là cách bạn kể câu chuyện của chính mình.”</p>
+          <p class="quote-main">おしゃれは、<br>自分を好きになるための<br>小さな魔法。</p>
           <p class="quote-sign">StyleHer</p>
-          <a href="spec.html" class="btn btn-soft">Khám phá câu chuyện <svg><use href="#i-arrow"/></svg></a>
+          <a href="spec.html" class="btn btn-soft">StyleHerについて <svg><use href="#i-arrow"/></svg></a>
         </div>
-        <img class="quote-img" src="https://images.unsplash.com/photo-1533407180697-9d0479dc5b3f?w=900&h=700&fit=crop&auto=format&q=70" alt="Cô gái cầm bó hoa hồng" loading="lazy">
+        <img class="quote-img" src="https://images.unsplash.com/photo-1498090890888-3df9298e7b84?w=900&h=700&fit=crop&auto=format&q=70" alt="白いブラウスの女性" loading="lazy">
       </div>
     </section>
 
-    <!-- ===== Sản phẩm nổi bật ===== -->
+    <!-- ===== おすすめアイテム ===== -->
     <section class="section" id="products">
       <div class="container">
         <div class="section-head">
-          <h2>Sản phẩm nổi bật</h2>
-          <button class="link-btn" id="productReset">Xem tất cả <svg><use href="#i-arrow"/></svg></button>
+          <h2>おすすめアイテム<small>ITEM</small></h2>
+          <button class="link-btn" id="productReset">すべて見る <svg><use href="#i-arrow"/></svg></button>
         </div>
         <div class="filters">
-          <div class="chip-group" role="group" aria-label="Loại sản phẩm" id="catChips"></div>
+          <div class="chip-group" role="group" aria-label="カテゴリー" id="catChips"></div>
           <div class="filter-selects">
-            <label class="select-wrap"><span>Màu</span><select id="colorSelect"></select></label>
-            <label class="select-wrap"><span>Giá</span>
+            <label class="select-wrap"><span>カラー</span><select id="colorSelect"></select></label>
+            <label class="select-wrap"><span>価格</span>
               <select id="priceSelect">
-                <option value="all">Tất cả</option>
-                <option value="0-400000">Dưới 400.000đ</option>
-                <option value="400000-700000">400.000 – 700.000đ</option>
-                <option value="700000-99999999">Trên 700.000đ</option>
+                <option value="all">すべて</option>
+                <option value="0-2999">〜¥2,999</option>
+                <option value="3000-6999">¥3,000〜¥6,999</option>
+                <option value="7000-9999999">¥7,000〜</option>
               </select>
             </label>
           </div>
         </div>
         <div class="product-grid" id="productGrid"></div>
         <div class="more-wrap"><button class="btn btn-outline" id="productMore" hidden></button></div>
-        <p class="note">Giá tham khảo. Bấm “Mua ngay” để mở trang tìm kiếm sản phẩm trên sàn thương mại điện tử.</p>
+        <p class="note">※価格は参考価格です。「購入する」を押すと、楽天市場・Amazonの検索結果ページが開きます。</p>
       </div>
     </section>
 
-    <!-- ===== Shop uy tín ===== -->
+    <!-- ===== 人気ショップ ===== -->
     <section class="container">
       <div class="shops">
         <div class="shops-head">
           <div>
-            <h2>Khám phá các shop thời trang uy tín</h2>
-            <p>Thương hiệu chính hãng – Link mua trực tiếp – Ưu đãi mỗi ngày</p>
+            <h2>人気ショップ<small>SHOP</small></h2>
+            <p>定番ブランドから通販サイトまで。公式サイトへすぐ移動できます。</p>
           </div>
         </div>
         <ul class="shop-list" id="shopList"></ul>
       </div>
     </section>
 
-    <!-- ===== Bài viết mới nhất ===== -->
+    <!-- ===== 新着コラム ===== -->
     <section class="section" id="blog">
       <div class="container">
         <div class="section-head">
-          <h2>Bài viết mới nhất</h2>
+          <h2>新着コラム<small>COLUMN</small></h2>
         </div>
         <div class="post-grid" id="postGrid"></div>
       </div>
     </section>
 
-    <!-- ===== Cộng đồng ===== -->
+    <!-- ===== コミュニティ ===== -->
     <section class="container" id="community">
       <div class="community">
         <div class="community-text">
-          <h2>Cộng đồng StyleHer</h2>
-          <p>Nơi phụ nữ truyền cảm hứng thời trang mỗi ngày</p>
-          <button class="btn btn-dark" id="joinBtn">Tham gia ngay <svg><use href="#i-arrow"/></svg></button>
+          <h2>StyleHer コミュニティ</h2>
+          <p>毎日のコーデをシェアして、<br>おしゃれのヒントを見つけよう。</p>
+          <button class="btn btn-dark" id="joinBtn">参加する <svg><use href="#i-arrow"/></svg></button>
         </div>
         <div class="community-gallery" id="communityGallery"></div>
       </div>
       <ul class="community-perks">
-        <li><svg><use href="#i-share"/></svg>Chia sẻ outfit</li>
-        <li><svg><use href="#i-question"/></svg>Đặt câu hỏi</li>
-        <li><svg><use href="#i-chat"/></svg>Nhận tư vấn từ cộng đồng</li>
-        <li><svg><use href="#i-flower"/></svg>Trở thành phiên bản đẹp hơn của chính mình</li>
+        <li><svg><use href="#i-share"/></svg>コーデをシェア</li>
+        <li><svg><use href="#i-question"/></svg>コーデの相談</li>
+        <li><svg><use href="#i-chat"/></svg>みんなのアドバイス</li>
+        <li><svg><use href="#i-flower"/></svg>もっと私らしいおしゃれへ</li>
       </ul>
     </section>
   </main>
 
-  <!-- ===== Footer ===== -->
+  <!-- ===== フッター ===== -->
   <footer class="footer">
     <div class="container footer-inner">
       <div class="footer-brand">
         <span class="logo-name">StyleHer</span>
-        <span class="logo-tag">Đẹp hơn mỗi ngày</span>
+        <span class="logo-tag">毎日、もっと私らしく</span>
       </div>
       <div class="footer-col">
-        <h3>Về chúng tôi</h3>
-        <a href="spec.html">Giới thiệu dự án</a>
-        <a href="#community">Cộng đồng</a>
-        <a href="#blog">Blog</a>
+        <h3>StyleHerについて</h3>
+        <a href="spec.html">プロジェクト概要</a>
+        <a href="#community">コミュニティ</a>
+        <a href="#blog">コラム</a>
       </div>
       <div class="footer-col">
-        <h3>Hỗ trợ</h3>
-        <a href="#products">Hướng dẫn mua hàng</a>
-        <a href="#favorites" data-open-favs>Danh sách yêu thích</a>
-        <a href="#top">Câu hỏi thường gặp</a>
+        <h3>サポート</h3>
+        <a href="#products">お買い物ガイド</a>
+        <a href="#favorites" data-open-favs>お気に入り</a>
+        <a href="#top">よくある質問</a>
       </div>
       <div class="footer-col">
-        <h3>Kết nối với chúng tôi</h3>
+        <h3>公式SNS</h3>
         <div class="socials">
           <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook"><svg><use href="#i-facebook"/></svg></a>
           <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram"><svg><use href="#i-instagram"/></svg></a>
@@ -254,25 +254,25 @@
         </div>
       </div>
       <div class="footer-news">
-        <h3>Nhận xu hướng mới nhất mỗi ngày</h3>
+        <h3>最新トレンドをメールでお届け</h3>
         <form class="news-form" id="newsForm" novalidate>
-          <input type="email" id="newsEmail" placeholder="Nhập email của bạn" aria-label="Email">
-          <button type="submit" aria-label="Đăng ký"><svg><use href="#i-arrow"/></svg></button>
+          <input type="email" id="newsEmail" placeholder="メールアドレスを入力" aria-label="メールアドレス">
+          <button type="submit" aria-label="登録する"><svg><use href="#i-arrow"/></svg></button>
         </form>
-        <p class="news-msg" id="newsMsg">Đăng ký để không bỏ lỡ những xu hướng thời trang hot nhất</p>
+        <p class="news-msg" id="newsMsg">週に一度、人気のトレンドとコーデをお届けします。</p>
       </div>
       <p class="footer-script" aria-hidden="true">More Than Fashion<br>A Better You</p>
     </div>
     <div class="container footer-bottom">
-      <p>© 2026 StyleHer. Dữ liệu mẫu phục vụ demo · Ảnh: <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a></p>
+      <p>© 2026 StyleHer. 掲載内容はデモ用のサンプルです · 写真: <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a></p>
     </div>
   </footer>
 
-  <!-- ===== Modal dùng chung (chi tiết xu hướng, bộ phối, bài viết, tìm kiếm, yêu thích) ===== -->
+  <!-- ===== 共通モーダル（トレンド・コーデ・コラムの詳細、検索、お気に入り） ===== -->
   <div class="modal" id="modal" hidden>
     <div class="modal-backdrop" data-close></div>
     <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <button class="icon-btn modal-close" data-close aria-label="Đóng"><svg><use href="#i-close"/></svg></button>
+      <button class="icon-btn modal-close" data-close aria-label="閉じる"><svg><use href="#i-close"/></svg></button>
       <div class="modal-body" id="modalBody"></div>
     </div>
   </div>

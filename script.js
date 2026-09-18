@@ -1,23 +1,26 @@
-// ===== StyleHer – hiển thị dữ liệu & tương tác =====
+// ===== StyleHer 表示とインタラクション =====
 const D = STYLEHER_DATA;
 const $ = (sel, root = document) => root.querySelector(sel);
 
-// ---------- Tiện ích ----------
-// id Unsplash -> URL ảnh; nếu là đường dẫn (có "/" hoặc ".") thì dùng nguyên
+// ---------- ユーティリティ ----------
+// Unsplash の画像ID → URL。パス（"/" や "." を含む）の場合はそのまま使う
 function img(id, w, h) {
   if (/[/.]/.test(id)) return id;
   const size = h ? `w=${w}&h=${h}&fit=crop` : `w=${w}`;
   return `https://images.unsplash.com/photo-${id}?${size}&auto=format&q=70`;
 }
 
-const money = (n) => n.toLocaleString("vi-VN") + "đ";
+const money = (n) => "¥" + n.toLocaleString("ja-JP");
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-// Bỏ dấu tiếng Việt để tìm kiếm không phân biệt dấu
+// 検索用に正規化（全角/半角をそろえ、カタカナをひらがなに変換）
 const plain = (s) =>
-  String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "d").toLowerCase();
+  String(s)
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\u30a1-\u30f6]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
 
 const icon = (name) => `<svg><use href="#i-${name}"/></svg>`;
 
@@ -39,22 +42,22 @@ function toast(msg) {
   toast.timer = setTimeout(() => el.classList.remove("show"), 2600);
 }
 
-// ---------- Ngày hôm nay & xu hướng của ngày ----------
+// ---------- 今日の日付と「今日のトレンド」 ----------
 const today = new Date();
 const dayNumber = Math.floor(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) / 86400000);
-const todayText = today.toLocaleDateString("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
-// Mỗi ngày một xu hướng khác được đưa lên đầu
+const todayText = today.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", weekday: "short" });
+// 日替わりで先頭に表示するトレンドを変える
 const todayTrendIndex = dayNumber % D.trends.length;
 const trendsToday = [...D.trends.slice(todayTrendIndex), ...D.trends.slice(0, todayTrendIndex)];
 
-// ---------- Yêu thích (lưu trong trình duyệt) ----------
+// ---------- お気に入り（ブラウザに保存） ----------
 const FAV_KEY = "styleher:favorites";
 let favs = { trend: [], outfit: [], product: [] };
 try {
   const saved = JSON.parse(localStorage.getItem(FAV_KEY));
   if (saved) favs = { ...favs, ...saved };
 } catch (e) {
-  /* trình duyệt chặn localStorage: vẫn dùng được trong phiên hiện tại */
+  /* localStorage が使えない環境でも、表示中は利用できる */
 }
 
 const isFav = (type, id) => favs[type].includes(id);
@@ -63,13 +66,13 @@ function saveFavs() {
   try {
     localStorage.setItem(FAV_KEY, JSON.stringify(favs));
   } catch (e) {
-    /* bỏ qua */
+    /* 何もしない */
   }
 }
 
 function heartBtn(type, id, extra = "") {
   const on = isFav(type, id);
-  return `<button class="heart ${extra} ${on ? "on" : ""}" data-fav="${type}:${id}" aria-pressed="${on}" aria-label="${on ? "Bỏ yêu thích" : "Thêm vào yêu thích"}">${icon(on ? "heart-fill" : "heart")}</button>`;
+  return `<button class="heart ${extra} ${on ? "on" : ""}" data-fav="${type}:${id}" aria-pressed="${on}" aria-label="${on ? "お気に入りから外す" : "お気に入りに追加"}">${icon(on ? "heart-fill" : "heart")}</button>`;
 }
 
 function toggleFav(type, id) {
@@ -82,13 +85,13 @@ function toggleFav(type, id) {
   document.querySelectorAll(`[data-fav="${type}:${id}"]`).forEach((btn) => {
     btn.classList.toggle("on", on);
     btn.setAttribute("aria-pressed", on);
-    btn.setAttribute("aria-label", on ? "Bỏ yêu thích" : "Thêm vào yêu thích");
+    btn.setAttribute("aria-label", on ? "お気に入りから外す" : "お気に入りに追加");
     const use = btn.querySelector("use");
     if (use) use.setAttribute("href", on ? "#i-heart-fill" : "#i-heart");
-    if (btn.classList.contains("btn")) btn.lastChild.textContent = on ? " Đã lưu" : " Lưu vào yêu thích";
+    if (btn.classList.contains("btn")) btn.lastChild.textContent = on ? " 保存済み" : " お気に入りに保存";
   });
   updateFavCount();
-  toast(on ? "Đã thêm vào danh sách yêu thích" : "Đã bỏ khỏi danh sách yêu thích");
+  toast(on ? "お気に入りに追加しました" : "お気に入りから外しました");
   if (modalKind === "favorites") renderFavorites();
 }
 
@@ -111,9 +114,9 @@ function renderHero() {
     )
     .join("");
   $("#heroDots").innerHTML = D.heroSlides
-    .map((_, i) => `<button aria-label="Ảnh ${i + 1}" ${i === 0 ? 'class="active"' : ""}></button>`)
+    .map((_, i) => `<button aria-label="画像 ${i + 1}" ${i === 0 ? 'class="active"' : ""}></button>`)
     .join("");
-  $("#heroDate").textContent = `Cập nhật ${todayText}`;
+  $("#heroDate").textContent = `${todayText} 更新`;
   showHero(0);
 
   $("#heroPrev").addEventListener("click", () => showHero(heroIndex - 1, true));
@@ -136,11 +139,11 @@ function showHero(i, manual = false) {
   heroTimer = setInterval(() => showHero(heroIndex + 1), manual ? 9000 : 6000);
 }
 
-// ---------- Xu hướng ----------
+// ---------- トレンド ----------
 let trendAge = "all";
 
 function renderTrendFilter() {
-  const opts = [{ id: "all", name: "Mọi độ tuổi" }, ...D.ages];
+  const opts = [{ id: "all", name: "すべての年代" }, ...D.ages];
   $("#trendAgeFilter").innerHTML = opts
     .map((a) => `<button class="chip" data-age="${a.id}" aria-pressed="${a.id === trendAge}">${a.name}</button>`)
     .join("");
@@ -149,29 +152,29 @@ function renderTrendFilter() {
 function trendCard(t) {
   const isToday = t.id === D.trends[todayTrendIndex].id;
   return `
-    <article class="trend-card" data-open="trend:${t.id}" tabindex="0" role="button" aria-label="Xem xu hướng ${esc(t.name)}">
+    <article class="trend-card" data-open="trend:${t.id}" tabindex="0" role="button" aria-label="${esc(t.name)}のトレンドを見る">
       <div class="card-img">
         <img src="${img(t.img, 400, 530)}" alt="${esc(t.name)}" loading="lazy">
-        ${isToday ? '<span class="today-badge">Hot hôm nay</span>' : ""}
+        ${isToday ? '<span class="today-badge">今日の注目</span>' : ""}
         <span class="hot-meter">${icon("trend")} ${t.hot}%</span>
         ${heartBtn("trend", t.id, "heart-float")}
       </div>
       <div class="trend-body">
         <h3>${esc(t.name)}</h3>
         <p>${esc(t.sub)}</p>
-        <small>${t.posts} bài viết · ${esc(t.season)}</small>
+        <small>${t.posts}件のコーデ · ${esc(t.season)}</small>
       </div>
     </article>`;
 }
 
 function renderTrends() {
-  $("#trendUpdated").textContent = `Cập nhật mỗi ngày · ${todayText}`;
+  $("#trendUpdated").textContent = `毎日更新 · ${todayText}`;
   const list = trendsToday.filter((t) => trendAge === "all" || t.ages.includes(trendAge));
-  $("#trendGrid").innerHTML = list.length ? list.map(trendCard).join("") : '<p class="empty">Chưa có xu hướng phù hợp.</p>';
+  $("#trendGrid").innerHTML = list.length ? list.map(trendCard).join("") : '<p class="empty">条件に合うトレンドがありません。</p>';
 }
 
-// ---------- Gợi ý phối đồ ----------
-const outfitState = { scene: "dilam", age: "all", taste: "all" };
+// ---------- シーン別コーデ ----------
+const outfitState = { scene: D.scenes[0].id, age: "all", taste: "all" };
 
 function renderOutfitControls() {
   $("#sceneTabs").innerHTML = D.scenes
@@ -180,18 +183,18 @@ function renderOutfitControls() {
         `<button class="scene-tab" role="tab" data-scene="${s.id}" aria-selected="${s.id === outfitState.scene}">${icon(s.icon)}${s.name}</button>`
     )
     .join("");
-  const ageOpts = [{ id: "all", name: "Mọi độ tuổi" }, ...D.ages];
+  const ageOpts = [{ id: "all", name: "すべての年代" }, ...D.ages];
   $("#ageChips").innerHTML = ageOpts
     .map((a) => `<button class="chip" data-age="${a.id}" aria-pressed="${a.id === outfitState.age}">${a.name}</button>`)
     .join("");
   $("#tasteSelect").innerHTML =
-    '<option value="all">Tất cả</option>' + D.tastes.map((t) => `<option value="${t.id}">${t.name}</option>`).join("");
+    '<option value="all">すべて</option>' + D.tastes.map((t) => `<option value="${t.id}">${t.name}</option>`).join("");
   $("#tasteSelect").value = outfitState.taste;
 }
 
 function outfitCard(o) {
   return `
-    <article class="outfit-card" data-open="outfit:${o.id}" tabindex="0" role="button" aria-label="Xem bộ phối ${esc(o.title)}">
+    <article class="outfit-card" data-open="outfit:${o.id}" tabindex="0" role="button" aria-label="コーデ「${esc(o.title)}」を見る">
       <div class="outfit-media">
         <div class="outfit-main"><img src="${img(o.img, 420, 590)}" alt="${esc(o.title)}" loading="lazy"></div>
         <div class="outfit-items">
@@ -201,7 +204,7 @@ function outfitCard(o) {
       <div class="outfit-body">
         <div>
           <h3>${esc(o.title)}</h3>
-          <p>Trọn bộ từ ${money(outfitPrice(o))}</p>
+          <p>アイテム合計 ${money(outfitPrice(o))}〜</p>
         </div>
         ${heartBtn("outfit", o.id)}
       </div>
@@ -218,10 +221,10 @@ function renderOutfits() {
   );
   $("#outfitGrid").innerHTML = list.length
     ? list.map(outfitCard).join("")
-    : '<p class="empty">Chưa có bộ phối phù hợp. Thử chọn độ tuổi hoặc phong cách khác nhé!</p>';
+    : '<p class="empty">条件に合うコーデがありません。年代やテイストを変えてみてください。</p>';
 }
 
-// ---------- Sản phẩm ----------
+// ---------- アイテム ----------
 const productState = { cat: "all", color: "all", price: "all" };
 const PRODUCT_PAGE = 10;
 let productLimit = PRODUCT_PAGE;
@@ -232,7 +235,7 @@ function renderProductControls() {
     .join("");
   const colors = [...new Set(D.products.map((p) => p.color))];
   $("#colorSelect").innerHTML =
-    '<option value="all">Tất cả</option>' + colors.map((c) => `<option value="${c}">${c}</option>`).join("");
+    '<option value="all">すべて</option>' + colors.map((c) => `<option value="${c}">${c}</option>`).join("");
   $("#colorSelect").value = productState.color;
   $("#priceSelect").value = productState.price;
 }
@@ -240,7 +243,7 @@ function renderProductControls() {
 function productCard(p) {
   return `
     <article class="product-card">
-      <a class="card-img" href="${p.url}" target="_blank" rel="noopener" aria-label="Mua ${esc(p.name)} trên ${p.shop}">
+      <a class="card-img" href="${p.url}" target="_blank" rel="noopener" aria-label="${esc(p.name)}を${p.shop}で見る">
         <img src="${img(p.img, 400, 440)}" alt="${esc(p.name)}" loading="lazy">
       </a>
       <div class="product-body">
@@ -250,7 +253,7 @@ function productCard(p) {
           <span class="price">${money(p.price)}</span>
           ${heartBtn("product", p.id)}
         </div>
-        <a class="buy-btn" href="${p.url}" target="_blank" rel="noopener">Mua ngay ${icon("external")}</a>
+        <a class="buy-btn" href="${p.url}" target="_blank" rel="noopener">購入する ${icon("external")}</a>
       </div>
     </article>`;
 }
@@ -263,18 +266,18 @@ function renderProducts() {
   );
   $("#productGrid").innerHTML = list.length
     ? list.slice(0, productLimit).map(productCard).join("")
-    : '<p class="empty">Không có sản phẩm phù hợp với bộ lọc.</p>';
+    : '<p class="empty">条件に合うアイテムがありません。</p>';
   const more = $("#productMore");
   more.hidden = list.length <= productLimit;
-  more.textContent = `Xem thêm ${list.length - productLimit} sản phẩm`;
+  more.textContent = `もっと見る（残り${list.length - productLimit}件）`;
 }
 
-// ---------- Shop, bài viết, cộng đồng ----------
+// ---------- ショップ・コラム・コミュニティ ----------
 function renderShops() {
   $("#shopList").innerHTML = D.shops
     .map(
       (s) => `
-      <li><a href="${s.url}" target="_blank" rel="noopener" aria-label="${esc(s.name)} (mở trang web của shop)">
+      <li><a href="${s.url}" target="_blank" rel="noopener" aria-label="${esc(s.name)}（公式サイトを開く）">
         <span class="shop-logo">${esc(s.name)}</span>
         <span class="shop-type">${esc(s.type)}</span>
       </a></li>`
@@ -282,17 +285,17 @@ function renderShops() {
     .join("");
 }
 
-const dateVi = (iso) => new Date(iso).toLocaleDateString("vi-VN", { day: "numeric", month: "short", year: "numeric" });
+const dateJa = (iso) => new Date(iso).toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" });
 
 function renderPosts() {
   $("#postGrid").innerHTML = D.posts
     .map(
       (p) => `
-      <article class="post-card" data-open="post:${p.id}" tabindex="0" role="button" aria-label="Đọc bài ${esc(p.title)}">
+      <article class="post-card" data-open="post:${p.id}" tabindex="0" role="button" aria-label="コラム「${esc(p.title)}」を読む">
         <div class="card-img"><img src="${img(p.img, 520, 360)}" alt="" loading="lazy"></div>
         <div class="post-body">
           <h3>${esc(p.title)}</h3>
-          <div class="post-meta"><span>${dateVi(p.date)}</span><span class="tag">${esc(p.tag)}</span></div>
+          <div class="post-meta"><span>${dateJa(p.date)}</span><span class="tag">${esc(p.tag)}</span></div>
         </div>
       </article>`
     )
@@ -301,7 +304,7 @@ function renderPosts() {
 
 function renderCommunity() {
   $("#communityGallery").innerHTML = D.community
-    .map((id) => `<img src="${img(id, 240, 280)}" alt="Outfit từ cộng đồng StyleHer" loading="lazy">`)
+    .map((id) => `<img src="${img(id, 240, 280)}" alt="StyleHerコミュニティのコーデ" loading="lazy">`)
     .join("");
 }
 
@@ -333,18 +336,18 @@ const miniProduct = (p) => `
     <div>
       <b>${esc(p.name)}</b>
       <span>${money(p.price)}</span><br>
-      <a href="${p.url}" target="_blank" rel="noopener">Mua trên ${p.shop} ${icon("external")}</a>
+      <a href="${p.url}" target="_blank" rel="noopener">${p.shop}で見る ${icon("external")}</a>
     </div>
   </div>`;
 
 function favButtonLarge(type, id) {
   const on = isFav(type, id);
-  return `<button class="btn btn-outline ${on ? "on" : ""}" data-fav="${type}:${id}" aria-pressed="${on}">${icon(on ? "heart-fill" : "heart")}<span> ${on ? "Đã lưu" : "Lưu vào yêu thích"}</span></button>`;
+  return `<button class="btn btn-outline ${on ? "on" : ""}" data-fav="${type}:${id}" aria-pressed="${on}">${icon(on ? "heart-fill" : "heart")}<span> ${on ? "保存済み" : "お気に入りに保存"}</span></button>`;
 }
 
 function openTrend(id) {
   const t = TRENDS[id];
-  const ageNames = t.ages.map((a) => D.ages.find((x) => x.id === a).name).join(", ");
+  const ageNames = t.ages.map((a) => D.ages.find((x) => x.id === a).name).join("・");
   const related = D.outfits.filter((o) => o.tastes.some((x) => t.tastes.includes(x))).slice(0, 3);
   openModal(
     `
@@ -353,27 +356,27 @@ function openTrend(id) {
         ${[t.img, ...t.gallery].slice(0, 4).map((g, i) => `<img src="${img(g, i ? 300 : 700, i ? 400 : 630)}" alt="${esc(t.name)}">`).join("")}
       </div>
       <div>
-        <p class="detail-kicker">Xu hướng ${t.id === D.trends[todayTrendIndex].id ? "· Hot hôm nay" : ""}</p>
+        <p class="detail-kicker">TREND ${t.id === D.trends[todayTrendIndex].id ? "· 今日の注目" : ""}</p>
         <h2 id="modalTitle">${esc(t.name)}</h2>
         <p class="section-sub">${esc(t.sub)}</p>
         <p class="detail-lead">${esc(t.desc)}</p>
         <div class="stats">
-          <div class="stat"><small>Độ hot</small><b>${t.hot}%</b><div class="meter"><span style="width:${t.hot}%"></span></div></div>
-          <div class="stat"><small>Thời điểm</small><b>${esc(t.season)}</b></div>
-          <div class="stat"><small>Hợp độ tuổi</small><b>${ageNames}</b></div>
+          <div class="stat"><small>注目度</small><b>${t.hot}%</b><div class="meter"><span style="width:${t.hot}%"></span></div></div>
+          <div class="stat"><small>シーズン</small><b>${esc(t.season)}</b></div>
+          <div class="stat"><small>おすすめ年代</small><b>${ageNames}</b></div>
         </div>
-        <h4>Điểm nổi bật</h4>
+        <h4>ポイント</h4>
         <ul>${t.points.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
-        <h4>Mẹo phối &amp; mặc được nhiều lần</h4>
+        <h4>着こなしと着回しのコツ</h4>
         <ul>${t.tips.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
         <div class="modal-actions">${favButtonLarge("trend", t.id)}</div>
       </div>
     </div>
-    <div class="result-group"><h3>Món đồ bắt trend này</h3></div>
+    <div class="result-group"><h3>このトレンドのアイテム</h3></div>
     <div class="mini-products">${t.products.map((p) => miniProduct(PRODUCTS[p])).join("")}</div>
     ${
       related.length
-        ? `<div class="result-group"><h3>Bộ phối gợi ý</h3><div class="result-list">${related.map(outfitResult).join("")}</div></div>`
+        ? `<div class="result-group"><h3>おすすめコーデ</h3><div class="result-list">${related.map(outfitResult).join("")}</div></div>`
         : ""
     }`,
     "trend"
@@ -382,8 +385,8 @@ function openTrend(id) {
 
 function openOutfit(id) {
   const o = OUTFITS[id];
-  const tasteNames = o.tastes.map((x) => D.tastes.find((t) => t.id === x).name).join(", ");
-  const ageNames = o.ages.map((a) => D.ages.find((x) => x.id === a).name).join(", ");
+  const tasteNames = o.tastes.map((x) => D.tastes.find((t) => t.id === x).name).join("・");
+  const ageNames = o.ages.map((a) => D.ages.find((x) => x.id === a).name).join("・");
   openModal(
     `
     <div class="detail">
@@ -392,17 +395,17 @@ function openOutfit(id) {
         ${o.items.map((id) => `<img src="${img(PRODUCTS[id].img, 300, 400)}" alt="${esc(PRODUCTS[id].name)}">`).join("")}
       </div>
       <div>
-        <p class="detail-kicker">Gợi ý phối đồ · ${SCENES[o.scene].name}</p>
+        <p class="detail-kicker">COORDINATE · ${SCENES[o.scene].name}</p>
         <h2 id="modalTitle">${esc(o.title)}</h2>
         <p class="detail-lead">${esc(o.desc)}</p>
         <div class="stats">
-          <div class="stat"><small>Trọn bộ từ</small><b>${money(outfitPrice(o))}</b></div>
-          <div class="stat"><small>Phong cách</small><b>${tasteNames}</b></div>
-          <div class="stat"><small>Hợp độ tuổi</small><b>${ageNames}</b></div>
+          <div class="stat"><small>アイテム合計</small><b>${money(outfitPrice(o))}</b></div>
+          <div class="stat"><small>テイスト</small><b>${tasteNames}</b></div>
+          <div class="stat"><small>おすすめ年代</small><b>${ageNames}</b></div>
         </div>
-        <h4>Mẹo mặc đẹp hơn</h4>
+        <h4>着こなしのコツ</h4>
         <ul>${o.tips.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
-        <h4>Các món trong bộ phối</h4>
+        <h4>コーデのアイテム</h4>
         <div class="mini-products" style="margin-top:0">${o.items.map((p) => miniProduct(PRODUCTS[p])).join("")}</div>
         <div class="modal-actions">${favButtonLarge("outfit", o.id)}</div>
       </div>
@@ -416,7 +419,7 @@ function openPost(id) {
   openModal(
     `
     <article class="article">
-      <p class="detail-kicker">${esc(p.tag)} · ${dateVi(p.date)}</p>
+      <p class="detail-kicker">${esc(p.tag)} · ${dateJa(p.date)}</p>
       <h2 id="modalTitle">${esc(p.title)}</h2>
       <img src="${img(p.img, 1100, 620)}" alt="">
       <p><b>${esc(p.excerpt)}</b></p>
@@ -426,17 +429,17 @@ function openPost(id) {
   );
 }
 
-// ---------- Tìm kiếm ----------
+// ---------- 検索 ----------
 const trendResult = (t) =>
-  `<button class="result-item" data-open="trend:${t.id}"><img src="${img(t.img, 110, 130)}" alt=""><span>${esc(t.name)}<small>Xu hướng · ${esc(t.sub)}</small></span></button>`;
+  `<button class="result-item" data-open="trend:${t.id}"><img src="${img(t.img, 110, 130)}" alt=""><span>${esc(t.name)}<small>トレンド · ${esc(t.sub)}</small></span></button>`;
 const outfitResult = (o) =>
-  `<button class="result-item" data-open="outfit:${o.id}"><img src="${img(o.img, 110, 130)}" alt=""><span>${esc(o.title)}<small>${SCENES[o.scene].name} · từ ${money(outfitPrice(o))}</small></span></button>`;
+  `<button class="result-item" data-open="outfit:${o.id}"><img src="${img(o.img, 110, 130)}" alt=""><span>${esc(o.title)}<small>${SCENES[o.scene].name} · ${money(outfitPrice(o))}〜</small></span></button>`;
 const productResult = (p) =>
-  `<a class="result-item" href="${p.url}" target="_blank" rel="noopener"><img src="${img(p.img, 110, 130)}" alt=""><span>${esc(p.name)}<small>${money(p.price)} · Mua trên ${p.shop}</small></span></a>`;
+  `<a class="result-item" href="${p.url}" target="_blank" rel="noopener"><img src="${img(p.img, 110, 130)}" alt=""><span>${esc(p.name)}<small>${money(p.price)} · ${p.shop}で見る</small></span></a>`;
 const postResult = (p) =>
-  `<button class="result-item" data-open="post:${p.id}"><img src="${img(p.img, 110, 130)}" alt=""><span>${esc(p.title)}<small>Bài viết · ${esc(p.tag)}</small></span></button>`;
+  `<button class="result-item" data-open="post:${p.id}"><img src="${img(p.img, 110, 130)}" alt=""><span>${esc(p.title)}<small>コラム · ${esc(p.tag)}</small></span></button>`;
 const shopResult = (s) =>
-  `<a class="result-item" href="${s.url}" target="_blank" rel="noopener"><span class="shop-logo" style="width:52px;height:52px;font-size:11px">${esc(s.name)}</span><span>${esc(s.name)}<small>Shop · ${esc(s.type)}</small></span></a>`;
+  `<a class="result-item" href="${s.url}" target="_blank" rel="noopener"><span class="shop-logo" style="width:52px;height:52px;font-size:11px">${esc(s.name)}</span><span>${esc(s.name)}<small>ショップ · ${esc(s.type)}</small></span></a>`;
 
 function search(query) {
   const words = plain(query).split(/\s+/).filter(Boolean);
@@ -446,13 +449,13 @@ function search(query) {
   };
   if (!words.length) return null;
   return {
-    "Xu hướng": D.trends.filter((t) => match(t.name, t.sub, t.desc, t.points, t.season)).map(trendResult),
-    "Gợi ý phối đồ": D.outfits
+    トレンド: D.trends.filter((t) => match(t.name, t.sub, t.desc, t.points, t.season)).map(trendResult),
+    コーデ: D.outfits
       .filter((o) => match(o.title, o.desc, SCENES[o.scene].name, o.tastes.map((x) => D.tastes.find((t) => t.id === x).name)))
       .map(outfitResult),
-    "Sản phẩm": D.products.filter((p) => match(p.name, p.color, CATS[p.cat].name, p.shop)).map(productResult),
-    "Bài viết": D.posts.filter((p) => match(p.title, p.excerpt, p.tag, p.body)).map(postResult),
-    Shop: D.shops.filter((s) => match(s.name, s.type)).map(shopResult),
+    アイテム: D.products.filter((p) => match(p.name, p.color, CATS[p.cat].name, p.shop)).map(productResult),
+    コラム: D.posts.filter((p) => match(p.title, p.excerpt, p.tag, p.body)).map(postResult),
+    ショップ: D.shops.filter((s) => match(s.name, s.type)).map(shopResult),
   };
 }
 
@@ -460,7 +463,7 @@ function renderSearchResults(query) {
   const res = search(query);
   const box = $("#searchResults");
   if (!res) {
-    box.innerHTML = `<p class="list-sub">Gợi ý: ${["quiet luxury", "đi làm", "váy", "jeans", "hồng", "túi xách"]
+    box.innerHTML = `<p class="list-sub">人気のキーワード: ${["きれいめ", "通勤", "ワンピース", "ブラウン", "ニット", "お呼ばれ"]
       .map((w) => `<button class="chip" data-suggest="${w}">${w}</button>`)
       .join(" ")}</p>`;
     return;
@@ -468,18 +471,18 @@ function renderSearchResults(query) {
   const groups = Object.entries(res).filter(([, items]) => items.length);
   const total = groups.reduce((n, [, items]) => n + items.length, 0);
   box.innerHTML = total
-    ? `<p class="list-sub">${total} kết quả cho “${esc(query)}”</p>` +
+    ? `<p class="list-sub">「${esc(query)}」の検索結果：${total}件</p>` +
       groups.map(([name, items]) => `<div class="result-group"><h3>${name} (${items.length})</h3><div class="result-list">${items.join("")}</div></div>`).join("")
-    : `<p class="empty">Không tìm thấy kết quả cho “${esc(query)}”. Thử từ khoá khác nhé!</p>`;
+    : `<p class="empty">「${esc(query)}」に一致する結果がありません。別のキーワードでお試しください。</p>`;
 }
 
 function openSearch(query = "") {
   openModal(
     `
-    <h2 class="list-title" id="modalTitle">Tìm kiếm</h2>
+    <h2 class="list-title" id="modalTitle">検索</h2>
     <div class="modal-search">
       ${icon("search")}
-      <input type="search" id="modalSearchInput" placeholder="Tìm xu hướng, bộ phối, sản phẩm, shop..." value="${esc(query)}" aria-label="Từ khoá tìm kiếm" autocomplete="off">
+      <input type="search" id="modalSearchInput" placeholder="トレンド・コーデ・アイテム・ショップを検索" value="${esc(query)}" aria-label="検索キーワード" autocomplete="off">
     </div>
     <div id="searchResults"></div>`,
     "search"
@@ -490,17 +493,17 @@ function openSearch(query = "") {
   input.addEventListener("input", () => renderSearchResults(input.value));
 }
 
-// ---------- Danh sách yêu thích ----------
+// ---------- お気に入り一覧 ----------
 function renderFavorites() {
   const groups = [
-    ["Xu hướng", favs.trend.filter((id) => TRENDS[id]).map((id) => TRENDS[id]), trendResult, "trend"],
-    ["Bộ phối", favs.outfit.filter((id) => OUTFITS[id]).map((id) => OUTFITS[id]), outfitResult, "outfit"],
-    ["Sản phẩm", favs.product.filter((id) => PRODUCTS[id]).map((id) => PRODUCTS[id]), productResult, "product"],
+    ["トレンド", favs.trend.filter((id) => TRENDS[id]).map((id) => TRENDS[id]), trendResult, "trend"],
+    ["コーデ", favs.outfit.filter((id) => OUTFITS[id]).map((id) => OUTFITS[id]), outfitResult, "outfit"],
+    ["アイテム", favs.product.filter((id) => PRODUCTS[id]).map((id) => PRODUCTS[id]), productResult, "product"],
   ];
   const total = groups.reduce((n, g) => n + g[1].length, 0);
   $("#modalBody").innerHTML = `
-    <h2 class="list-title" id="modalTitle">Danh sách yêu thích</h2>
-    <p class="list-sub">${total ? `Bạn đã lưu ${total} mục. Dữ liệu được lưu trên trình duyệt này.` : "Bấm vào biểu tượng trái tim ở xu hướng, bộ phối hoặc sản phẩm để lưu lại xem sau."}</p>
+    <h2 class="list-title" id="modalTitle">お気に入り</h2>
+    <p class="list-sub">${total ? `${total}件を保存しています（このブラウザに保存されます）。` : "トレンド・コーデ・アイテムのハートを押すと、ここに保存されます。"}</p>
     ${groups
       .filter((g) => g[1].length)
       .map(
@@ -520,7 +523,7 @@ function openFavorites() {
   $(".modal-close").focus();
 }
 
-// ---------- Sự kiện ----------
+// ---------- イベント ----------
 function openFromData(value) {
   const [type, id] = value.split(":");
   if (type === "trend") openTrend(id);
@@ -556,7 +559,7 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// Mở thẻ bằng bàn phím (Enter / Space)
+// キーボード（Enter / Space）でカードを開く
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !$("#modal").hidden) return closeModal();
   const card = e.target.closest?.("[data-open][role='button']");
@@ -634,7 +637,7 @@ $("#productMore").addEventListener("click", () => {
   renderProducts();
 });
 
-// Tìm kiếm ở header
+// ヘッダーの検索
 $("#searchForm").addEventListener("submit", (e) => {
   e.preventDefault();
   openSearch($("#searchInput").value.trim());
@@ -643,13 +646,13 @@ $("#searchForm").addEventListener("submit", (e) => {
 $("#searchToggle").addEventListener("click", () => openSearch(""));
 $("#favBtn").addEventListener("click", openFavorites);
 
-// Menu điện thoại
+// スマホ用メニュー
 const nav = $("#mainNav");
 const menuBtn = $("#menuBtn");
 function setMenu(open) {
   nav.classList.toggle("open", open);
   menuBtn.setAttribute("aria-expanded", open);
-  menuBtn.setAttribute("aria-label", open ? "Đóng menu" : "Mở menu");
+  menuBtn.setAttribute("aria-label", open ? "メニューを閉じる" : "メニューを開く");
   menuBtn.querySelector("use").setAttribute("href", open ? "#i-close" : "#i-menu");
 }
 menuBtn.addEventListener("click", () => setMenu(!nav.classList.contains("open")));
@@ -657,7 +660,7 @@ nav.addEventListener("click", (e) => {
   if (e.target.closest("a")) setMenu(false);
 });
 
-// Tô đậm mục menu theo phần đang xem
+// 表示中のセクションに合わせてメニューを強調
 const navLinks = [...nav.querySelectorAll("a")];
 const sectionIds = ["trends", "outfits", "products", "blog", "community"];
 const observer = new IntersectionObserver(
@@ -678,27 +681,27 @@ window.addEventListener(
   { passive: true }
 );
 
-// Cộng đồng: tính năng mở rộng trong tương lai (ngoài phạm vi MVP)
+// コミュニティ：今後の拡張機能（今回のMVPの対象外）
 $("#joinBtn").addEventListener("click", () =>
-  toast("Cộng đồng StyleHer sắp ra mắt – đăng ký email ở cuối trang để nhận thông báo nhé!")
+  toast("コミュニティ機能は近日公開予定です。ページ下部のメール登録でお知らせします！")
 );
 
-// Đăng ký nhận tin (demo: chỉ kiểm tra email, không gửi đi đâu)
+// メール登録（デモ：形式チェックのみで、送信はしない）
 $("#newsForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const email = $("#newsEmail").value.trim();
   const msg = $("#newsMsg");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    msg.textContent = "Email chưa đúng định dạng, bạn kiểm tra lại nhé.";
+    msg.textContent = "メールアドレスの形式が正しくありません。";
     msg.className = "news-msg err";
     return;
   }
-  msg.textContent = "Cảm ơn bạn! (Bản demo: email chưa được gửi đi.)";
+  msg.textContent = "ご登録ありがとうございます！（デモ版のため実際には送信されません）";
   msg.className = "news-msg ok";
   $("#newsEmail").value = "";
 });
 
-// ---------- Khởi động ----------
+// ---------- 初期化 ----------
 renderHero();
 renderTrendFilter();
 renderTrends();
