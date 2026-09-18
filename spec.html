@@ -19,7 +19,7 @@
       <dl class="meta">
         <div><dt>プロジェクト名</dt><dd>（仮）ファッショントレンド・コーディネート支援Webアプリ</dd></div>
         <div><dt>作成日</dt><dd>2026年9月18日</dd></div>
-        <div><dt>版数</dt><dd>v0.1（ドラフト）</dd></div>
+        <div><dt>版数</dt><dd>v0.2（機能一覧を追加）</dd></div>
       </dl>
     </div>
   </header>
@@ -33,6 +33,7 @@
         <li><a href="#sec3">3. 対象ユーザー</a></li>
         <li><a href="#sec4">4. 対象ユーザーの抱える悩み・課題</a></li>
         <li><a href="#sec5">5. 今回のプロジェクトで解決すること</a></li>
+        <li><a href="#sec6">6. 機能一覧</a></li>
       </ol>
     </nav>
     <div class="overlay" id="overlay"></div>
@@ -180,9 +181,9 @@
             <tbody>
               <tr><td>1</td><td>トレンドが分からない・調べる時間がない</td><td><strong>毎日更新されるトレンド情報</strong> を1か所に集約し、スマホで手軽にチェックできるようにする</td></tr>
               <tr><td>2</td><td>コーディネートの仕方が分からない</td><td>トレンドごとに <strong>コーディネート画像・着こなし例</strong> を掲載し、具体的な組み合わせ方を提示する</td></tr>
-              <tr><td>3</td><td>自分に合うか判断できない</td><td><strong>年代・シーン（通勤／休日／デートなど）・テイスト別</strong> にトレンドやコーデを絞り込めるようにする</td></tr>
-              <tr><td>4</td><td>どこで買えばいいか分からない</td><td>トレンドアイテムごとに <strong>取り扱いショップ情報と商品購入リンク</strong> を掲載し、そのまま注文ページへ移動できるようにする</td></tr>
-              <tr><td>5</td><td>買い物で失敗したくない</td><td>トレンドの <strong>注目度・旬の時期・着回しのポイント</strong> を合わせて紹介し、納得して購入できるようにする</td></tr>
+              <tr><td>3</td><td>自分に合うか判断できない</td><td><strong>年代・シーン（通勤／休日／デートなど）・テイスト別</strong> にトレンドやコーデを絞り込めるようにする。さらに <strong>かんたんスタイル診断</strong> で、一人ひとりに合うトレンド・コーデを提案する</td></tr>
+              <tr><td>4</td><td>どこで買えばいいか分からない</td><td>トレンドアイテムごとに <strong>取り扱いショップ情報と商品購入リンク</strong> を掲載し、そのまま注文ページへ移動できるようにする。<strong>複数のECサイトを比べて</strong> 購入先を選べるようにする</td></tr>
+              <tr><td>5</td><td>買い物で失敗したくない</td><td>トレンドの <strong>注目度・旬の時期・着回しのポイント</strong> を合わせて紹介し、アイテムごとに <strong>何通りのコーデに使えるか（着回し提案）</strong> を表示して、納得して購入できるようにする</td></tr>
             </tbody>
           </table>
         </div>
@@ -208,6 +209,7 @@
             <ul>
               <li>トレンドアイテムを取り扱うショップの紹介</li>
               <li>商品ページ（ECサイト）への購入リンク</li>
+              <li>1つのアイテムについて複数のECサイトの購入リンクを表示し、比べて選べる</li>
             </ul>
           </div>
           <div class="feature">
@@ -220,6 +222,25 @@
             <h4><span class="feature-num">5</span>検索機能</h4>
             <ul>
               <li>キーワード・アイテム種類・色・価格帯などで検索できる</li>
+              <li>価格順などで並び替えができる</li>
+            </ul>
+          </div>
+          <div class="feature">
+            <h4><span class="feature-num">6</span>着回し提案<span class="new">v0.2</span></h4>
+            <ul>
+              <li>アイテムごとに、そのアイテムを使ったコーデを一覧で表示する</li>
+            </ul>
+          </div>
+          <div class="feature">
+            <h4><span class="feature-num">7</span>かんたんスタイル診断<span class="new">v0.2</span></h4>
+            <ul>
+              <li>年代・好きなテイスト・よく着るシーンを選ぶと、おすすめのトレンドとコーデを表示する</li>
+            </ul>
+          </div>
+          <div class="feature">
+            <h4><span class="feature-num">8</span>コラム<span class="new">v0.2</span></h4>
+            <ul>
+              <li>トレンドの解説や着こなしのコツを記事で紹介する</li>
             </ul>
           </div>
         </div>
@@ -229,6 +250,9 @@
           <li>アプリ内での直接決済機能</li>
           <li>AIによる手持ち服を使ったコーディネート提案</li>
           <li>ユーザー同士のコーデ投稿・コミュニティ機能</li>
+          <li>会員登録・ログイン（お気に入りの端末間同期）</li>
+          <li>管理画面（MVPではデータファイルの更新で代替）</li>
+          <li>メールマガジンの実配信</li>
           <li>体型診断・パーソナルカラー診断との連携</li>
           <li>ネイティブアプリ（iOS／Android）版の提供</li>
         </ul>
@@ -241,11 +265,71 @@
         </ul>
       </section>
 
+      <!-- 6. 機能一覧 -->
+      <section id="sec6">
+        <h2><span class="num">6</span>機能一覧</h2>
+        <p class="legend"><span class="prio prio-high">高</span>MVPに必須　<span class="prio prio-mid">中</span>MVPで対応　<span class="prio prio-low">低</span>MVPで簡易的に対応　<span class="prio prio-out">対象外</span>今回は開発しない</p>
+        <div class="table-wrap">
+          <table class="func-table">
+            <thead><tr><th>ID</th><th>機能</th><th>概要</th><th>優先度</th></tr></thead>
+            <tbody>
+              <tr class="p-high"><td>F-01</td><td>トップページ</td><td>今日の注目トレンド、シーン別コーデ、おすすめアイテム、新着コラムを1ページで紹介する</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-02</td><td>トレンド一覧</td><td>最新トレンドを一覧で表示する。年代で絞り込める</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-03</td><td>トレンド詳細</td><td>説明、注目ポイント、注目度、旬の時期、着回しのコツ、関連画像、関連アイテム、おすすめコーデを表示する</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-04</td><td>今日の注目トレンド</td><td>毎日1つのトレンドを「今日の注目」として先頭に表示し、更新日を表示する</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-05</td><td>シーン別コーデ一覧</td><td>通勤・休日・デート・お呼ばれ・旅行・おうち時間のシーン別にコーデを表示する</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-06</td><td>コーデの絞り込み</td><td>年代（20代・30代・40代）とテイスト（きれいめ・カジュアルなど）で絞り込む</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-07</td><td>コーデ詳細</td><td>コーデ画像、使用アイテム、アイテム合計金額、着こなしのコツ、各アイテムの購入リンクを表示する</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-08</td><td>アイテム一覧</td><td>カテゴリー・カラー・価格帯で絞り込み、おすすめ順・価格順で並び替える</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-09</td><td>アイテム詳細</td><td>アイテムの情報（価格・カラー・カテゴリー）と購入リンクを表示する</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-10</td><td>購入リンク（ショップ比較）</td><td>楽天市場・Amazonなど複数のECサイトへのリンクを並べ、比べて購入先を選べる</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-11</td><td>着回し提案</td><td>アイテムごとに「このアイテムを使ったコーデ」と着回し数を表示する</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-12</td><td>キーワード検索</td><td>トレンド・コーデ・アイテム・コラム・ショップを横断して検索する。カタカナ／ひらがな／半角の表記ゆれに対応する</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-13</td><td>お気に入り</td><td>トレンド・コーデ・アイテムを保存し、一覧で見返す・削除する（ブラウザに保存）</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-14</td><td>スマートフォン対応</td><td>スマホ・タブレット・PCのどの画面幅でも見やすく操作できる</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-high"><td>F-15</td><td>コンテンツ更新</td><td>トレンド・コーデ・アイテム・コラムのデータを更新して毎日の情報を反映する（MVPではデータファイルを更新）</td><td><span class="prio prio-high">高</span></td></tr>
+              <tr class="p-mid"><td>F-16</td><td>かんたんスタイル診断</td><td>年代・好きなテイスト・よく着るシーンの3問に答えると、おすすめのトレンドとコーデを表示する（結果はブラウザに保存）</td><td><span class="prio prio-mid">中</span></td></tr>
+              <tr class="p-mid"><td>F-17</td><td>ショップ一覧</td><td>人気ショップ・ECサイトを紹介し、公式サイトへ移動できる</td><td><span class="prio prio-mid">中</span></td></tr>
+              <tr class="p-mid"><td>F-18</td><td>コラム</td><td>トレンド解説や着こなしのコツを記事で紹介する</td><td><span class="prio prio-mid">中</span></td></tr>
+              <tr class="p-low"><td>F-19</td><td>最近見たもの</td><td>最近見たトレンド・コーデ・アイテムを表示し、すぐに見返せる（ブラウザに保存）</td><td><span class="prio prio-low">低</span></td></tr>
+              <tr class="p-low"><td>F-20</td><td>メールマガジン登録</td><td>メールアドレスを登録するフォーム（MVPでは入力チェックのみ、実際の配信は対象外）</td><td><span class="prio prio-low">低</span></td></tr>
+              <tr class="p-out"><td>F-21</td><td>会員登録・ログイン</td><td>アカウントを作り、お気に入りを複数の端末で同期する</td><td><span class="prio prio-out">対象外</span></td></tr>
+              <tr class="p-out"><td>F-22</td><td>管理画面</td><td>運営者がブラウザ上でトレンド・コーデ・アイテムを登録・編集する</td><td><span class="prio prio-out">対象外</span></td></tr>
+              <tr class="p-out"><td>F-23</td><td>コミュニティ</td><td>ユーザー同士でコーデを投稿・共有する</td><td><span class="prio prio-out">対象外</span></td></tr>
+              <tr class="p-out"><td>F-24</td><td>AIコーデ提案</td><td>手持ちの服を登録し、AIがコーデを提案する</td><td><span class="prio prio-out">対象外</span></td></tr>
+              <tr class="p-out"><td>F-25</td><td>体型・パーソナルカラー診断</td><td>外部の診断サービスと連携して、似合う服を提案する</td><td><span class="prio prio-out">対象外</span></td></tr>
+              <tr class="p-out"><td>F-26</td><td>アプリ内決済</td><td>サイト内で商品を購入・決済する</td><td><span class="prio prio-out">対象外</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>ユーザーの課題と機能の対応</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ユーザーの課題（4章）</th><th>対応する機能</th></tr></thead>
+            <tbody>
+              <tr><td>① コーディネートの仕方が分からない</td><td>F-05 シーン別コーデ一覧、F-07 コーデ詳細、F-11 着回し提案</td></tr>
+              <tr><td>② 最新のトレンドを把握できていない</td><td>F-02 トレンド一覧、F-03 トレンド詳細、F-04 今日の注目トレンド、F-15 コンテンツ更新、F-18 コラム</td></tr>
+              <tr><td>③ 自分に合うかどうか判断できない</td><td>F-06 コーデの絞り込み、F-16 かんたんスタイル診断</td></tr>
+              <tr><td>④ 欲しい服をどこで買えばいいか分からない</td><td>F-08 アイテム一覧、F-09 アイテム詳細、F-10 購入リンク（ショップ比較）、F-17 ショップ一覧</td></tr>
+              <tr><td>⑤ 買い物で失敗したくない</td><td>F-03 トレンド詳細（旬の時期・着回しのコツ）、F-11 着回し提案、F-13 お気に入り</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>v0.1からの追加・変更点</h3>
+        <ul>
+          <li><strong>追加</strong>：F-09 アイテム詳細、F-10 ショップ比較、F-11 着回し提案、F-15 コンテンツ更新、F-16 かんたんスタイル診断、F-18 コラム、F-19 最近見たもの</li>
+          <li><strong>明確化</strong>：スマートフォン対応（F-14）、メールマガジン（F-20）の範囲</li>
+          <li><strong>対象外に追記</strong>：会員登録・ログイン（F-21）、管理画面（F-22）</li>
+        </ul>
+      </section>
+
     </main>
   </div>
 
   <footer class="site-footer">
-    <p>プロジェクト仕様書・要件定義 v0.1（ドラフト）｜2026年9月18日</p>
+    <p>プロジェクト仕様書・要件定義 v0.2｜2026年9月18日</p>
     <p><a href="index.html">→ StyleHer（Webアプリ）を見る</a></p>
   </footer>
 

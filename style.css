@@ -93,7 +93,8 @@ h4,
 
 /* 見出しの上に英字ラベル */
 .section-head h2,
-.shops h2 {
+.shops h2,
+.shindan-intro h2 {
   display: flex;
   flex-direction: column-reverse;
 }
@@ -991,6 +992,196 @@ h2 small {
   display: none;
 }
 
+/* ===== アイテム詳細・着回し（F-09〜F-11） ===== */
+.text-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  letter-spacing: inherit;
+}
+
+.text-btn:hover {
+  color: var(--accent);
+}
+
+button.card-img {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+}
+
+.wear-badge {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.mini-img {
+  flex: 0 0 auto;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.detail-gallery.single {
+  grid-template-columns: 1fr;
+}
+
+.detail-gallery.single img:first-child {
+  aspect-ratio: 7 / 8;
+}
+
+.detail-price {
+  margin: 10px 0 18px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.detail-price small {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.shop-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.shop-links .btn {
+  padding: 11px 20px;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+button.tag {
+  border: none;
+  font-size: 12px;
+  padding: 5px 12px;
+}
+
+button.tag:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ===== かんたんスタイル診断（F-16） ===== */
+.shindan {
+  display: grid;
+  grid-template-columns: 0.8fr 1.4fr;
+  gap: 32px;
+  padding: 36px 40px;
+  border-radius: 22px;
+  background: linear-gradient(120deg, #f3e6e0 0%, #f7efe9 100%);
+}
+
+.shindan-intro p {
+  margin: 12px 0 16px;
+  color: #5e504c;
+}
+
+.shindan-points {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.shindan-points li::before {
+  content: "✓ ";
+  color: var(--accent);
+}
+
+.shindan-form,
+.shindan-result {
+  padding: 26px 28px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.shindan-form[hidden],
+.shindan-result[hidden] {
+  display: none;
+}
+
+.shindan-form fieldset {
+  margin: 0 0 20px;
+  padding: 0;
+  border: none;
+}
+
+.shindan-form legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.shindan-form legend span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: "Cormorant Garamond", serif;
+  font-weight: 600;
+}
+
+.shindan-form legend small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.result-type {
+  font-size: 24px;
+  margin: 4px 0 8px;
+}
+
+.result-text {
+  margin: 0;
+  color: #5e504c;
+}
+
+.shindan-result .result-group h3 {
+  font-size: 14px;
+}
+
+/* ===== 最近見たもの（F-19） ===== */
+#recent[hidden] {
+  display: none;
+}
+
+.recent-list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(240px, 1fr);
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
 /* ===== Shops ===== */
 .shops {
   margin-top: 64px;
@@ -1681,6 +1872,17 @@ mark {
 }
 
 @media (max-width: 900px) {
+  .shindan {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 24px 18px;
+  }
+
+  .shindan-form,
+  .shindan-result {
+    padding: 20px 16px;
+  }
+
   :root {
     --header-h: 62px;
   }

@@ -32,7 +32,31 @@ const POSTS = byId(D.posts);
 const SCENES = byId(D.scenes);
 const CATS = byId(D.categories);
 
-const outfitPrice = (o) => o.items.reduce((sum, id) => sum + PRODUCTS[id].price, 0);
+// コーデに使うアイテム（写真の主役アイテム main + サムネイルの items）
+const outfitItems = (o) => (o.main ? [o.main, ...o.items] : o.items);
+const outfitPrice = (o) => outfitItems(o).reduce((sum, id) => sum + PRODUCTS[id].price, 0);
+
+// そのアイテムを使ったコーデ（F-11 着回し提案）
+const outfitsWith = (pid) => D.outfits.filter((o) => outfitItems(o).includes(pid));
+const wearCount = (pid) => outfitsWith(pid).length;
+
+const nameOf = (list, id) => list.find((x) => x.id === id).name;
+
+// ブラウザ保存（使えない環境でもエラーにしない）
+function load(key, fallback) {
+  try {
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+function save(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    /* 何もしない */
+  }
+}
 
 function toast(msg) {
   const el = $("#toast");
@@ -225,7 +249,7 @@ function renderOutfits() {
 }
 
 // ---------- アイテム ----------
-const productState = { cat: "all", color: "all", price: "all" };
+const productState = { cat: "all", color: "all", price: "all", sort: "recommend" };
 const PRODUCT_PAGE = 10;
 let productLimit = PRODUCT_PAGE;
 
@@ -238,16 +262,19 @@ function renderProductControls() {
     '<option value="all">すべて</option>' + colors.map((c) => `<option value="${c}">${c}</option>`).join("");
   $("#colorSelect").value = productState.color;
   $("#priceSelect").value = productState.price;
+  $("#sortSelect").value = productState.sort;
 }
 
 function productCard(p) {
+  const wear = wearCount(p.id);
   return `
     <article class="product-card">
-      <a class="card-img" href="${p.url}" target="_blank" rel="noopener" aria-label="${esc(p.name)}を${p.shop}で見る">
+      <button class="card-img" data-open="product:${p.id}" aria-label="${esc(p.name)}の詳細を見る">
         <img src="${img(p.img, 400, 440)}" alt="${esc(p.name)}" loading="lazy">
-      </a>
+        ${wear ? `<span class="wear-badge">着回し ${wear}コーデ</span>` : ""}
+      </button>
       <div class="product-body">
-        <h3>${esc(p.name)}</h3>
+        <h3><button class="text-btn" data-open="product:${p.id}">${esc(p.name)}</button></h3>
         <p class="product-shop">${CATS[p.cat].name} · ${esc(p.color)} · ${p.shop}</p>
         <div class="product-foot">
           <span class="price">${money(p.price)}</span>
@@ -264,6 +291,13 @@ function renderProducts() {
   const list = D.products.filter(
     (p) => (cat === "all" || p.cat === cat) && (color === "all" || p.color === color) && p.price >= min && p.price <= max
   );
+  // 並び替え（F-08）
+  const sorters = {
+    "price-asc": (a, b) => a.price - b.price,
+    "price-desc": (a, b) => b.price - a.price,
+    wear: (a, b) => wearCount(b.id) - wearCount(a.id),
+  };
+  if (sorters[productState.sort]) list.sort(sorters[productState.sort]);
   $("#productGrid").innerHTML = list.length
     ? list.slice(0, productLimit).map(productCard).join("")
     : '<p class="empty">条件に合うアイテムがありません。</p>';
@@ -332,9 +366,9 @@ function closeModal() {
 
 const miniProduct = (p) => `
   <div class="mini-product">
-    <img src="${img(p.img, 120, 140)}" alt="" loading="lazy">
+    <button class="mini-img" data-open="product:${p.id}" aria-label="${esc(p.name)}の詳細を見る"><img src="${img(p.img, 120, 140)}" alt="" loading="lazy"></button>
     <div>
-      <b>${esc(p.name)}</b>
+      <b><button class="text-btn" data-open="product:${p.id}">${esc(p.name)}</button></b>
       <span>${money(p.price)}</span><br>
       <a href="${p.url}" target="_blank" rel="noopener">${p.shop}で見る ${icon("external")}</a>
     </div>
@@ -347,7 +381,7 @@ function favButtonLarge(type, id) {
 
 function openTrend(id) {
   const t = TRENDS[id];
-  const ageNames = t.ages.map((a) => D.ages.find((x) => x.id === a).name).join("・");
+  const ageNames = t.ages.map((a) => nameOf(D.ages, a)).join("・");
   const related = D.outfits.filter((o) => o.tastes.some((x) => t.tastes.includes(x))).slice(0, 3);
   openModal(
     `
@@ -385,8 +419,8 @@ function openTrend(id) {
 
 function openOutfit(id) {
   const o = OUTFITS[id];
-  const tasteNames = o.tastes.map((x) => D.tastes.find((t) => t.id === x).name).join("・");
-  const ageNames = o.ages.map((a) => D.ages.find((x) => x.id === a).name).join("・");
+  const tasteNames = o.tastes.map((x) => nameOf(D.tastes, x)).join("・");
+  const ageNames = o.ages.map((a) => nameOf(D.ages, a)).join("・");
   openModal(
     `
     <div class="detail">
@@ -406,11 +440,57 @@ function openOutfit(id) {
         <h4>着こなしのコツ</h4>
         <ul>${o.tips.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
         <h4>コーデのアイテム</h4>
-        <div class="mini-products" style="margin-top:0">${o.items.map((p) => miniProduct(PRODUCTS[p])).join("")}</div>
+        <div class="mini-products" style="margin-top:0">${outfitItems(o).map((p) => miniProduct(PRODUCTS[p])).join("")}</div>
         <div class="modal-actions">${favButtonLarge("outfit", o.id)}</div>
       </div>
     </div>`,
     "outfit"
+  );
+}
+
+// アイテム詳細（F-09）・ショップ比較（F-10）・着回し提案（F-11）
+function openProduct(id) {
+  const p = PRODUCTS[id];
+  const outfits = outfitsWith(p.id);
+  const trends = D.trends.filter((t) => t.products.includes(p.id));
+  openModal(
+    `
+    <div class="detail">
+      <div class="detail-gallery single">
+        <img src="${img(p.img, 700, 800)}" alt="${esc(p.name)}">
+      </div>
+      <div>
+        <p class="detail-kicker">ITEM · ${CATS[p.cat].name}</p>
+        <h2 id="modalTitle">${esc(p.name)}</h2>
+        <p class="detail-price">${money(p.price)}<small>（参考価格）</small></p>
+        <div class="stats">
+          <div class="stat"><small>カラー</small><b>${esc(p.color)}</b></div>
+          <div class="stat"><small>カテゴリー</small><b>${CATS[p.cat].name}</b></div>
+          <div class="stat"><small>着回し</small><b>${outfits.length}コーデ</b></div>
+        </div>
+        <h4>ショップを比べて購入する</h4>
+        <div class="shop-links">
+          ${p.links
+            .map(
+              (l, i) =>
+                `<a class="btn ${i === 0 ? "btn-dark" : "btn-outline"}" href="${l.url}" target="_blank" rel="noopener">${esc(l.shop)}で探す ${icon("external")}</a>`
+            )
+            .join("")}
+        </div>
+        <p class="note">各ショップの検索結果ページが開きます。価格や在庫はショップでご確認ください。</p>
+        ${trends.length ? `<h4>このアイテムが入っているトレンド</h4><div class="tag-list">${trends.map((t) => `<button class="tag" data-open="trend:${t.id}">${esc(t.name)}</button>`).join("")}</div>` : ""}
+        <div class="modal-actions">${favButtonLarge("product", p.id)}</div>
+      </div>
+    </div>
+    <div class="result-group">
+      <h3>このアイテムを使ったコーデ（${outfits.length}）</h3>
+      ${
+        outfits.length
+          ? `<p class="list-sub">1着で${outfits.length}通りの着こなしができます。</p><div class="result-list">${outfits.map(outfitResult).join("")}</div>`
+          : '<p class="list-sub">このアイテムを使ったコーデは準備中です。</p>'
+      }
+    </div>`,
+    "product"
   );
 }
 
@@ -435,7 +515,7 @@ const trendResult = (t) =>
 const outfitResult = (o) =>
   `<button class="result-item" data-open="outfit:${o.id}"><img src="${img(o.img, 110, 130)}" alt=""><span>${esc(o.title)}<small>${SCENES[o.scene].name} · ${money(outfitPrice(o))}〜</small></span></button>`;
 const productResult = (p) =>
-  `<a class="result-item" href="${p.url}" target="_blank" rel="noopener"><img src="${img(p.img, 110, 130)}" alt=""><span>${esc(p.name)}<small>${money(p.price)} · ${p.shop}で見る</small></span></a>`;
+  `<button class="result-item" data-open="product:${p.id}"><img src="${img(p.img, 110, 130)}" alt=""><span>${esc(p.name)}<small>アイテム · ${money(p.price)}</small></span></button>`;
 const postResult = (p) =>
   `<button class="result-item" data-open="post:${p.id}"><img src="${img(p.img, 110, 130)}" alt=""><span>${esc(p.title)}<small>コラム · ${esc(p.tag)}</small></span></button>`;
 const shopResult = (s) =>
@@ -451,7 +531,7 @@ function search(query) {
   return {
     トレンド: D.trends.filter((t) => match(t.name, t.sub, t.desc, t.points, t.season)).map(trendResult),
     コーデ: D.outfits
-      .filter((o) => match(o.title, o.desc, SCENES[o.scene].name, o.tastes.map((x) => D.tastes.find((t) => t.id === x).name)))
+      .filter((o) => match(o.title, o.desc, SCENES[o.scene].name, o.tastes.map((x) => nameOf(D.tastes, x))))
       .map(outfitResult),
     アイテム: D.products.filter((p) => match(p.name, p.color, CATS[p.cat].name, p.shop)).map(productResult),
     コラム: D.posts.filter((p) => match(p.title, p.excerpt, p.tag, p.body)).map(postResult),
@@ -528,7 +608,98 @@ function openFromData(value) {
   const [type, id] = value.split(":");
   if (type === "trend") openTrend(id);
   if (type === "outfit") openOutfit(id);
+  if (type === "product") openProduct(id);
   if (type === "post") openPost(id);
+  if (type !== "post") addRecent(type, id);
+}
+
+// ---------- 最近見たもの（F-19） ----------
+const RECENT_KEY = "styleher:recent";
+const RECENT_MAX = 8;
+let recent = load(RECENT_KEY, []);
+
+function addRecent(type, id) {
+  const key = `${type}:${id}`;
+  recent = [key, ...recent.filter((k) => k !== key)].slice(0, RECENT_MAX);
+  save(RECENT_KEY, recent);
+  renderRecent();
+}
+
+function renderRecent() {
+  const items = recent
+    .map((key) => {
+      const [type, id] = key.split(":");
+      if (type === "trend" && TRENDS[id]) return trendResult(TRENDS[id]);
+      if (type === "outfit" && OUTFITS[id]) return outfitResult(OUTFITS[id]);
+      if (type === "product" && PRODUCTS[id]) return productResult(PRODUCTS[id]);
+      return "";
+    })
+    .filter(Boolean);
+  $("#recent").hidden = items.length === 0;
+  $("#recentList").innerHTML = items.join("");
+}
+
+// ---------- かんたんスタイル診断（F-16） ----------
+const PROFILE_KEY = "styleher:profile";
+const TASTE_TYPES = {
+  kireime: "上品でちゃんと見える服が好きなあなた。ベーシックカラーと、きれいなシルエットを意識すると、さらに素敵に。",
+  casual: "動きやすさと自分らしさを大切にするあなた。定番アイテムに、旬の色をひとつ足すのがおすすめ。",
+  feminine: "やわらかく女性らしい雰囲気が似合うあなた。甘いアイテムは一点だけにすると、大人っぽくまとまります。",
+  natural: "心地よさを大切にするあなた。リネンやニットなど、素材感のあるアイテムがよく似合います。",
+  simple: "無駄のないすっきりした服が好きなあなた。モノトーンに素材感で奥行きを出すと、洗練された印象に。",
+};
+const answer = { age: null, tastes: [], scene: null };
+
+function renderShindanQuestions() {
+  const chip = (q, item, on) => `<button type="button" class="chip" data-q="${q}" data-v="${item.id}" aria-pressed="${on}">${item.name}</button>`;
+  $("#qAge").innerHTML = D.ages.map((a) => chip("age", a, answer.age === a.id)).join("");
+  $("#qTaste").innerHTML = D.tastes.map((t) => chip("taste", t, answer.tastes.includes(t.id))).join("");
+  $("#qScene").innerHTML = D.scenes.map((sc) => chip("scene", sc, answer.scene === sc.id)).join("");
+}
+
+// 年代・テイスト・シーンの一致度で並べる（1つ目に選んだテイストを重視）
+function recommend(profile) {
+  const [main, sub] = profile.tastes;
+  const tasteScore = (list, w) => (list.includes(main) ? w : 0) + (sub && list.includes(sub) ? w / 2 : 0);
+  const trends = [...D.trends]
+    .map((t) => ({ t, score: (t.ages.includes(profile.age) ? 2 : 0) + tasteScore(t.tastes, 4) }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2)
+    .map((x) => x.t);
+  const outfits = [...D.outfits]
+    .map((o) => ({ o, score: (o.scene === profile.scene ? 4 : 0) + (o.ages.includes(profile.age) ? 2 : 0) + tasteScore(o.tastes, 2) }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4)
+    .map((x) => x.o);
+  return { trends, outfits };
+}
+
+function showShindanResult(profile) {
+  const { trends, outfits } = recommend(profile);
+  const tasteNames = profile.tastes.map((t) => nameOf(D.tastes, t));
+  $("#shindanForm").hidden = true;
+  const box = $("#shindanResult");
+  box.hidden = false;
+  box.innerHTML = `
+    <p class="detail-kicker">RESULT · ${nameOf(D.ages, profile.age)} · ${SCENES[profile.scene].name}</p>
+    <h3 class="result-type">あなたは「${tasteNames.join("×")}」タイプ</h3>
+    <p class="result-text">${TASTE_TYPES[profile.tastes[0]]}</p>
+    <div class="result-group"><h3>あなたにおすすめのトレンド</h3><div class="result-list">${trends.map(trendResult).join("")}</div></div>
+    <div class="result-group"><h3>あなたにおすすめのコーデ</h3><div class="result-list">${outfits.map(outfitResult).join("")}</div></div>
+    <div class="modal-actions">
+      <button class="btn btn-dark" id="shindanApply">この条件でコーデを見る ${icon("arrow")}</button>
+      <button class="btn btn-outline" id="shindanRetry">もう一度診断する</button>
+    </div>`;
+}
+
+function resetShindan() {
+  Object.assign(answer, { age: null, tastes: [], scene: null });
+  save(PROFILE_KEY, null);
+  $("#shindanResult").hidden = true;
+  $("#shindanForm").hidden = false;
+  renderShindanQuestions();
 }
 
 document.addEventListener("click", (e) => {
@@ -619,6 +790,12 @@ $("#colorSelect").addEventListener("change", (e) => {
   renderProducts();
 });
 
+$("#sortSelect").addEventListener("change", (e) => {
+  productState.sort = e.target.value;
+  productLimit = PRODUCT_PAGE;
+  renderProducts();
+});
+
 $("#priceSelect").addEventListener("change", (e) => {
   productState.price = e.target.value;
   productLimit = PRODUCT_PAGE;
@@ -626,7 +803,7 @@ $("#priceSelect").addEventListener("change", (e) => {
 });
 
 $("#productReset").addEventListener("click", () => {
-  Object.assign(productState, { cat: "all", color: "all", price: "all" });
+  Object.assign(productState, { cat: "all", color: "all", price: "all", sort: "recommend" });
   productLimit = PRODUCT_PAGE;
   renderProductControls();
   renderProducts();
@@ -635,6 +812,55 @@ $("#productReset").addEventListener("click", () => {
 $("#productMore").addEventListener("click", () => {
   productLimit += PRODUCT_PAGE;
   renderProducts();
+});
+
+// 最近見たもの
+$("#recentClear").addEventListener("click", () => {
+  recent = [];
+  save(RECENT_KEY, recent);
+  renderRecent();
+});
+
+// スタイル診断
+$("#shindanForm").addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-q]");
+  if (!chip) return;
+  const { q, v } = chip.dataset;
+  if (q === "age") answer.age = v;
+  if (q === "scene") answer.scene = v;
+  if (q === "taste") {
+    if (answer.tastes.includes(v)) answer.tastes = answer.tastes.filter((x) => x !== v);
+    else if (answer.tastes.length < 2) answer.tastes = [...answer.tastes, v];
+    else toast("テイストは2つまで選べます");
+  }
+  renderShindanQuestions();
+});
+
+$("#shindanForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!answer.age || !answer.tastes.length || !answer.scene) {
+    toast("3つの質問すべてに答えてください");
+    return;
+  }
+  const profile = { age: answer.age, tastes: [...answer.tastes], scene: answer.scene };
+  save(PROFILE_KEY, profile);
+  showShindanResult(profile);
+});
+
+$("#shindanResult").addEventListener("click", (e) => {
+  if (e.target.closest("#shindanRetry")) return resetShindan();
+  if (e.target.closest("#shindanApply")) {
+    const profile = load(PROFILE_KEY, null);
+    if (!profile) return;
+    // 結果が0件にならないテイストを選ぶ（なければテイストは「すべて」）
+    const fits = (taste) =>
+      D.outfits.some((o) => o.scene === profile.scene && o.ages.includes(profile.age) && o.tastes.includes(taste));
+    const taste = profile.tastes.find(fits) || "all";
+    Object.assign(outfitState, { scene: profile.scene, age: profile.age, taste });
+    renderOutfitControls();
+    renderOutfits();
+    document.getElementById("outfits").scrollIntoView({ behavior: "smooth" });
+  }
 });
 
 // ヘッダーの検索
@@ -662,7 +888,7 @@ nav.addEventListener("click", (e) => {
 
 // 表示中のセクションに合わせてメニューを強調
 const navLinks = [...nav.querySelectorAll("a")];
-const sectionIds = ["trends", "outfits", "products", "blog", "community"];
+const sectionIds = ["trends", "shindan", "outfits", "products", "blog", "community"];
 const observer = new IntersectionObserver(
   (entries) => {
     entries.forEach((entry) => {
@@ -712,4 +938,8 @@ renderProducts();
 renderShops();
 renderPosts();
 renderCommunity();
+renderShindanQuestions();
+const savedProfile = load(PROFILE_KEY, null);
+if (savedProfile && D.ages.some((a) => a.id === savedProfile.age) && SCENES[savedProfile.scene]) showShindanResult(savedProfile);
+renderRecent();
 updateFavCount();

@@ -1,7 +1,8 @@
 // ===== StyleHer サンプルデータ =====
 // 画像: Unsplash（無料で利用可能）。差し替えるときは画像ID、または
 // 自分の画像のパス（例: "images/shirt.jpg"）を `img` に入れてください。
-// 購入リンク: 楽天市場 / Amazon の検索結果ページへ移動します。価格は参考価格です。
+// 購入リンク: 楽天市場 / Amazon の検索結果ページへ移動します（q が検索キーワード）。価格は参考価格です。
+// 毎日の更新（F-15）は、このファイルのデータを書き換えて反映します。
 
 const STYLEHER_DATA = (() => {
   const rakuten = (q) => `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(q)}/`;
@@ -43,32 +44,44 @@ const STYLEHER_DATA = (() => {
   ];
 
   const products = [
-    { id: "p01", name: "レギュラーカラー白シャツ", cat: "tops", color: "白", price: 3990, shop: "楽天市場", img: "1603252109303-2751441dd157", url: rakuten("白シャツ レディース") },
-    { id: "p02", name: "ボウタイブラウス", cat: "tops", color: "白", price: 4990, shop: "Amazon", img: "1513097633097-329a3a64e0d4", url: amazon("ボウタイブラウス レディース") },
-    { id: "p03", name: "リブタートルネックニット", cat: "tops", color: "グレー", price: 3490, shop: "楽天市場", img: "1601379327928-bedfaf9da2d0", url: rakuten("リブ タートルネック ニット レディース") },
-    { id: "p04", name: "ざっくりVネックカーディガン", cat: "tops", color: "ベージュ", price: 5990, shop: "Amazon", img: "1683315565563-f72590773805", url: amazon("Vネック カーディガン ベージュ レディース") },
-    { id: "p05", name: "ノースリーブトップス", cat: "tops", color: "黒", price: 2990, shop: "楽天市場", img: "1519554318711-aaf73ece6ff9", url: rakuten("ノースリーブ トップス 黒 レディース") },
-    { id: "p06", name: "リネンシャツ", cat: "tops", color: "生成り", price: 4490, shop: "Amazon", img: "1713881676551-b16f22ce4719", url: amazon("リネンシャツ レディース") },
-    { id: "p07", name: "トレンチコート", cat: "outer", color: "ベージュ", price: 12900, shop: "楽天市場", img: "1722859031306-4c81e8d83957", url: rakuten("トレンチコート レディース ベージュ") },
-    { id: "p08", name: "ロングチェスターコート", cat: "outer", color: "キャメル", price: 15900, shop: "Amazon", img: "1635521248661-97f832387a70", url: amazon("チェスターコート キャメル レディース") },
-    { id: "p09", name: "センタープレスワイドパンツ", cat: "bottoms", color: "ベージュ", price: 4990, shop: "楽天市場", img: "1632282005753-29f80ed13c93", url: rakuten("ワイドパンツ センタープレス レディース") },
-    { id: "p10", name: "プリーツロングスカート", cat: "bottoms", color: "白", price: 5490, shop: "Amazon", img: "1762343041454-8f1fdd459811", url: amazon("プリーツスカート ロング 白") },
-    { id: "p11", name: "フレアミニスカート", cat: "bottoms", color: "黒", price: 3990, shop: "楽天市場", img: "1789110853398-539d78dd63bc", url: rakuten("フレアスカート 黒 レディース") },
-    { id: "p12", name: "ストレートデニム", cat: "bottoms", color: "ブルー", price: 5990, shop: "Amazon", img: "1602293589930-45aad59ba3ab", url: amazon("ストレートデニム レディース") },
-    { id: "p13", name: "シャツワンピース", cat: "onepiece", color: "ベージュ", price: 6990, shop: "楽天市場", img: "1621390636143-e8847ef86809", url: rakuten("シャツワンピース ベージュ") },
-    { id: "p14", name: "花柄キャミワンピース", cat: "onepiece", color: "花柄", price: 5990, shop: "Amazon", img: "1503408024948-0a3e1b2b519c", url: amazon("花柄 キャミワンピース") },
-    { id: "p15", name: "お呼ばれドレープワンピース", cat: "onepiece", color: "ピンク", price: 9900, shop: "楽天市場", img: "1499939667766-4afceb292d05", url: rakuten("結婚式 お呼ばれ ワンピース ピンク") },
-    { id: "p16", name: "ビットローファー", cat: "shoes", color: "ブラウン", price: 7990, shop: "Amazon", img: "1649503377051-e092f490c482", url: amazon("ビットローファー レディース ブラウン") },
-    { id: "p17", name: "ポインテッドパンプス", cat: "shoes", color: "ベージュ", price: 5990, shop: "楽天市場", img: "1621996659490-3275b4d0d951", url: rakuten("ポインテッドトゥ パンプス ベージュ") },
-    { id: "p18", name: "サイドジップショートブーツ", cat: "shoes", color: "ブラウン", price: 8990, shop: "Amazon", img: "1605733160314-4fc7dac4bb16", url: amazon("ショートブーツ レディース ブラウン") },
-    { id: "p19", name: "白スニーカー", cat: "shoes", color: "白", price: 6990, shop: "楽天市場", img: "1544441892-794166f1e3be", url: rakuten("白スニーカー レディース") },
-    { id: "p20", name: "レザーハンドバッグ", cat: "bag", color: "黒", price: 12900, shop: "Amazon", img: "1614179689702-355944cd0918", url: amazon("レザー ハンドバッグ 通勤 レディース") },
-    { id: "p21", name: "キャンバストートバッグ", cat: "bag", color: "生成り", price: 2990, shop: "楽天市場", img: "1574365569389-a10d488ca3fb", url: rakuten("キャンバストート 生成り") },
-    { id: "p22", name: "プリーツミニバッグ", cat: "bag", color: "黒", price: 4990, shop: "Amazon", img: "1761646237988-79635fce1841", url: amazon("パーティーバッグ ミニ 黒") },
-    { id: "p23", name: "ゴールドフープピアス", cat: "acc", color: "ゴールド", price: 2490, shop: "楽天市場", img: "1617038260897-41a1f14a8ca0", url: rakuten("フープピアス ゴールド") },
-    { id: "p24", name: "華奢チェーンネックレス", cat: "acc", color: "ゴールド", price: 3490, shop: "Amazon", img: "1633810542706-90e5ff7557be", url: amazon("華奢 ネックレス ゴールド") },
-    { id: "p25", name: "パールブレスレット", cat: "acc", color: "白", price: 2990, shop: "楽天市場", img: "1704957205218-d436eac4c607", url: rakuten("パールブレスレット") },
+    { id: "p01", name: "レギュラーカラー白シャツ", cat: "tops", color: "白", price: 3990, shop: "楽天市場", img: "1603252109303-2751441dd157", q: "白シャツ レディース" },
+    { id: "p02", name: "ボウタイブラウス", cat: "tops", color: "白", price: 4990, shop: "Amazon", img: "1513097633097-329a3a64e0d4", q: "ボウタイブラウス レディース" },
+    { id: "p03", name: "リブタートルネックニット", cat: "tops", color: "グレー", price: 3490, shop: "楽天市場", img: "1601379327928-bedfaf9da2d0", q: "リブ タートルネック ニット レディース" },
+    { id: "p04", name: "ざっくりVネックカーディガン", cat: "tops", color: "ベージュ", price: 5990, shop: "Amazon", img: "1683315565563-f72590773805", q: "Vネック カーディガン ベージュ レディース" },
+    { id: "p05", name: "ノースリーブトップス", cat: "tops", color: "黒", price: 2990, shop: "楽天市場", img: "1519554318711-aaf73ece6ff9", q: "ノースリーブ トップス 黒 レディース" },
+    { id: "p06", name: "リネンシャツ", cat: "tops", color: "生成り", price: 4490, shop: "Amazon", img: "1713881676551-b16f22ce4719", q: "リネンシャツ レディース" },
+    { id: "p07", name: "トレンチコート", cat: "outer", color: "ベージュ", price: 12900, shop: "楽天市場", img: "1722859031306-4c81e8d83957", q: "トレンチコート レディース ベージュ" },
+    { id: "p08", name: "ロングチェスターコート", cat: "outer", color: "キャメル", price: 15900, shop: "Amazon", img: "1635521248661-97f832387a70", q: "チェスターコート キャメル レディース" },
+    { id: "p09", name: "センタープレスワイドパンツ", cat: "bottoms", color: "ベージュ", price: 4990, shop: "楽天市場", img: "1632282005753-29f80ed13c93", q: "ワイドパンツ センタープレス レディース" },
+    { id: "p10", name: "プリーツロングスカート", cat: "bottoms", color: "白", price: 5490, shop: "Amazon", img: "1762343041454-8f1fdd459811", q: "プリーツスカート ロング 白" },
+    { id: "p11", name: "フレアミニスカート", cat: "bottoms", color: "黒", price: 3990, shop: "楽天市場", img: "1789110853398-539d78dd63bc", q: "フレアスカート 黒 レディース" },
+    { id: "p12", name: "ストレートデニム", cat: "bottoms", color: "ブルー", price: 5990, shop: "Amazon", img: "1602293589930-45aad59ba3ab", q: "ストレートデニム レディース" },
+    { id: "p13", name: "シャツワンピース", cat: "onepiece", color: "ベージュ", price: 6990, shop: "楽天市場", img: "1621390636143-e8847ef86809", q: "シャツワンピース ベージュ" },
+    { id: "p14", name: "花柄キャミワンピース", cat: "onepiece", color: "花柄", price: 5990, shop: "Amazon", img: "1503408024948-0a3e1b2b519c", q: "花柄 キャミワンピース" },
+    { id: "p15", name: "お呼ばれドレープワンピース", cat: "onepiece", color: "ピンク", price: 9900, shop: "楽天市場", img: "1499939667766-4afceb292d05", q: "結婚式 お呼ばれ ワンピース ピンク" },
+    { id: "p16", name: "ビットローファー", cat: "shoes", color: "ブラウン", price: 7990, shop: "Amazon", img: "1649503377051-e092f490c482", q: "ビットローファー レディース ブラウン" },
+    { id: "p17", name: "ポインテッドパンプス", cat: "shoes", color: "ベージュ", price: 5990, shop: "楽天市場", img: "1621996659490-3275b4d0d951", q: "ポインテッドトゥ パンプス ベージュ" },
+    { id: "p18", name: "サイドジップショートブーツ", cat: "shoes", color: "ブラウン", price: 8990, shop: "Amazon", img: "1605733160314-4fc7dac4bb16", q: "ショートブーツ レディース ブラウン" },
+    { id: "p19", name: "白スニーカー", cat: "shoes", color: "白", price: 6990, shop: "楽天市場", img: "1544441892-794166f1e3be", q: "白スニーカー レディース" },
+    { id: "p20", name: "レザーハンドバッグ", cat: "bag", color: "黒", price: 12900, shop: "Amazon", img: "1614179689702-355944cd0918", q: "レザー ハンドバッグ 通勤 レディース" },
+    { id: "p21", name: "キャンバストートバッグ", cat: "bag", color: "生成り", price: 2990, shop: "楽天市場", img: "1574365569389-a10d488ca3fb", q: "キャンバストート 生成り" },
+    { id: "p22", name: "プリーツミニバッグ", cat: "bag", color: "黒", price: 4990, shop: "Amazon", img: "1761646237988-79635fce1841", q: "パーティーバッグ ミニ 黒" },
+    { id: "p23", name: "ゴールドフープピアス", cat: "acc", color: "ゴールド", price: 2490, shop: "楽天市場", img: "1617038260897-41a1f14a8ca0", q: "フープピアス ゴールド" },
+    { id: "p24", name: "華奢チェーンネックレス", cat: "acc", color: "ゴールド", price: 3490, shop: "Amazon", img: "1633810542706-90e5ff7557be", q: "華奢 ネックレス ゴールド" },
+    { id: "p25", name: "パールブレスレット", cat: "acc", color: "白", price: 2990, shop: "楽天市場", img: "1704957205218-d436eac4c607", q: "パールブレスレット" },
   ];
+
+  // 各アイテムに複数ショップの購入リンクを付ける（F-10 ショップ比較）
+  // 先頭が「購入する」ボタンのリンクになる
+  products.forEach((p) => {
+    const links = [
+      { shop: "楽天市場", url: rakuten(p.q) },
+      { shop: "Amazon", url: amazon(p.q) },
+    ];
+    links.sort((a, b) => (a.shop === p.shop ? -1 : b.shop === p.shop ? 1 : 0));
+    p.links = links;
+    p.url = links[0].url;
+  });
 
   const trends = [
     {
@@ -169,6 +182,7 @@ const STYLEHER_DATA = (() => {
     },
   ];
 
+  // main: 写真の主役アイテム（サムネイルには出さないが、着回し数に含める）
   const outfits = [
     // 通勤
     { id: "o01", scene: "tsukin", title: "白シャツで清潔感のある通勤コーデ", img: "1758600587839-56ba05596c69", items: ["p01", "p09", "p17"], ages: ["20s", "30s", "40s"], tastes: ["kireime", "simple"], desc: "白シャツとベージュのワイドパンツは、どんな職場にもなじむ鉄板の組み合わせ。", tips: ["シャツはタックインして脚長に", "ネックレスで顔まわりを明るく"] },
@@ -180,13 +194,14 @@ const STYLEHER_DATA = (() => {
     { id: "o06", scene: "kyujitsu", title: "グレーコートで街歩き", img: "1527063652841-2920dd529e30", items: ["p01", "p12", "p19"], ages: ["20s", "30s"], tastes: ["casual", "simple"], desc: "ロングコートを羽織るだけで、シャツ×デニムの定番コーデも一気に大人っぽく。", tips: ["コートは前を開けて縦ラインを強調"] },
     { id: "o07", scene: "kyujitsu", title: "ざっくりニットでリラックス休日", img: "1544243747-b8ca15da2450", items: ["p04", "p12", "p18"], ages: ["20s", "30s"], tastes: ["casual"], desc: "テラコッタカラーのニットは、秋の休日に取り入れやすいトレンドカラー。", tips: ["ボトムはデニムで気取らずに"] },
     { id: "o08", scene: "kyujitsu", title: "カフェ巡りのシンプルコーデ", img: "1785053370880-1e74bf28c34f", items: ["p05", "p09", "p21"], ages: ["20s", "30s"], tastes: ["casual", "simple"], desc: "黒トップスとワイドパンツ、トートバッグで身軽にカフェ巡り。", tips: ["トートは生成りで抜け感を"] },
+    { id: "o25", scene: "kyujitsu", main: "p08", title: "キャメルコートで秋の週末", img: "1546859028-196808f21cd7", items: ["p03", "p12", "p18"], ages: ["20s", "30s", "40s"], tastes: ["kireime", "casual"], desc: "今季の主役カラー、キャメルのロングコート。デニムとブーツでカジュアルに着ても、きちんと見えます。", tips: ["インナーはボルドーや白で季節感を", "コートの前は開けて縦のラインを強調"] },
     // デート
     { id: "o09", scene: "date", title: "オフショルで甘めデート", img: "1768542920419-d4f9c631a1bf", items: ["p02", "p10", "p17"], ages: ["20s"], tastes: ["feminine"], desc: "アイボリーのオフショルダーで、やわらかくて女性らしい印象に。", tips: ["髪はゆるく巻いて", "肌見せは一か所だけにすると上品"] },
-    { id: "o10", scene: "date", title: "花柄ワンピースで休日デート", img: "1503408024948-0a3e1b2b519c", items: ["p04", "p17", "p23"], ages: ["20s", "30s"], tastes: ["feminine"], desc: "小花柄のキャミワンピースは、一枚でデートらしい華やかさが出ます。", tips: ["肌寒い日はカーディガンを肩掛けに"] },
-    { id: "o11", scene: "date", title: "白ブラウスで清楚な印象に", img: "1513097633097-329a3a64e0d4", items: ["p10", "p25", "p17"], ages: ["20s"], tastes: ["feminine", "kireime"], desc: "リボン付きの白ブラウスとプリーツスカートで、清楚で好印象なスタイル。", tips: ["パールアクセでさらに上品に"] },
-    { id: "o12", scene: "date", title: "シャツワンピースで大人デート", img: "1621390636143-e8847ef86809", items: ["p16", "p24", "p21"], ages: ["30s", "40s"], tastes: ["feminine", "natural"], desc: "ベージュのシャツワンピースは、カジュアルすぎず頑張りすぎない大人のデート服。", tips: ["ウエストをベルトでマークしてメリハリを"] },
+    { id: "o10", main: "p14", scene: "date", title: "花柄ワンピースで休日デート", img: "1503408024948-0a3e1b2b519c", items: ["p04", "p17", "p23"], ages: ["20s", "30s"], tastes: ["feminine"], desc: "小花柄のキャミワンピースは、一枚でデートらしい華やかさが出ます。", tips: ["肌寒い日はカーディガンを肩掛けに"] },
+    { id: "o11", main: "p02", scene: "date", title: "白ブラウスで清楚な印象に", img: "1513097633097-329a3a64e0d4", items: ["p10", "p25", "p17"], ages: ["20s"], tastes: ["feminine", "kireime"], desc: "リボン付きの白ブラウスとプリーツスカートで、清楚で好印象なスタイル。", tips: ["パールアクセでさらに上品に"] },
+    { id: "o12", main: "p13", scene: "date", title: "シャツワンピースで大人デート", img: "1621390636143-e8847ef86809", items: ["p16", "p24", "p21"], ages: ["30s", "40s"], tastes: ["feminine", "natural"], desc: "ベージュのシャツワンピースは、カジュアルすぎず頑張りすぎない大人のデート服。", tips: ["ウエストをベルトでマークしてメリハリを"] },
     // お呼ばれ
-    { id: "o13", scene: "oyobare", title: "ドレープワンピースで華やかに", img: "1499939667766-4afceb292d05", items: ["p22", "p17", "p24"], ages: ["20s", "30s"], tastes: ["feminine"], desc: "結婚式のお呼ばれにも安心なくすみピンク。揺れるドレープで写真映えも◎。", tips: ["白っぽく見える色は避けるのがマナー", "肩が出るデザインはボレロを"] },
+    { id: "o13", main: "p15", scene: "oyobare", title: "ドレープワンピースで華やかに", img: "1499939667766-4afceb292d05", items: ["p22", "p17", "p24"], ages: ["20s", "30s"], tastes: ["feminine"], desc: "結婚式のお呼ばれにも安心なくすみピンク。揺れるドレープで写真映えも◎。", tips: ["白っぽく見える色は避けるのがマナー", "肩が出るデザインはボレロを"] },
     { id: "o14", scene: "oyobare", title: "グリーンのワンピースで上品に", img: "1666162201218-79e596c6f206", items: ["p22", "p17", "p24"], ages: ["30s", "40s"], tastes: ["kireime"], desc: "深みのあるグリーンは、30代・40代のお呼ばれにおすすめの上品カラー。", tips: ["アクセは華奢なゴールドで統一"] },
     { id: "o15", scene: "oyobare", title: "黒ワンピースをクラシカルに", img: "1763906803298-90544fc67abd", items: ["p22", "p17", "p25"], ages: ["30s", "40s"], tastes: ["kireime", "simple"], desc: "黒のワンピースはパールと合わせて華やかに。食事会や式典にも。", tips: ["黒一色のときは小物で明るさをプラス"] },
     { id: "o16", scene: "oyobare", title: "サテントップスで大人のパーティー", img: "1759725415895-775562df4088", items: ["p10", "p22", "p23"], ages: ["20s", "30s"], tastes: ["feminine"], desc: "ツヤのあるサテンのドレープトップスで、二次会や女子会を華やかに。", tips: ["髪はまとめてピアスを主役に"] },

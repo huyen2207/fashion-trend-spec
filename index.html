@@ -61,6 +61,7 @@
         <a href="#top" class="active">ホーム</a>
         <a href="#trends">トレンド</a>
         <a href="#outfits">コーデ提案</a>
+        <a href="#shindan">スタイル診断</a>
         <a href="#products">アイテム</a>
         <a href="#blog">コラム</a>
         <a href="#community">コミュニティ</a>
@@ -125,6 +126,38 @@
       </div>
     </section>
 
+    <!-- ===== かんたんスタイル診断（F-16） ===== -->
+    <section class="section" id="shindan">
+      <div class="container">
+        <div class="shindan">
+          <div class="shindan-intro">
+            <h2>かんたんスタイル診断<small>STYLE CHECK</small></h2>
+            <p>3つの質問に答えるだけで、<br>あなたに合うトレンドとコーデが見つかります。</p>
+            <ul class="shindan-points">
+              <li>約30秒で完了</li>
+              <li>結果はこのブラウザに保存</li>
+            </ul>
+          </div>
+          <form class="shindan-form" id="shindanForm" novalidate>
+            <fieldset>
+              <legend><span>Q1</span>年代を教えてください</legend>
+              <div class="chip-group" id="qAge"></div>
+            </fieldset>
+            <fieldset>
+              <legend><span>Q2</span>好きなテイストは？<small>（2つまで）</small></legend>
+              <div class="chip-group" id="qTaste"></div>
+            </fieldset>
+            <fieldset>
+              <legend><span>Q3</span>いちばん服に悩むシーンは？</legend>
+              <div class="chip-group" id="qScene"></div>
+            </fieldset>
+            <button type="submit" class="btn btn-dark">診断する <svg><use href="#i-arrow"/></svg></button>
+          </form>
+          <div class="shindan-result" id="shindanResult" hidden></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== シーン別コーデ ===== -->
     <section class="section" id="outfits">
       <div class="container">
@@ -167,6 +200,14 @@
           <div class="chip-group" role="group" aria-label="カテゴリー" id="catChips"></div>
           <div class="filter-selects">
             <label class="select-wrap"><span>カラー</span><select id="colorSelect"></select></label>
+            <label class="select-wrap"><span>並び替え</span>
+              <select id="sortSelect">
+                <option value="recommend">おすすめ順</option>
+                <option value="price-asc">価格が安い順</option>
+                <option value="price-desc">価格が高い順</option>
+                <option value="wear">着回しできる順</option>
+              </select>
+            </label>
             <label class="select-wrap"><span>価格</span>
               <select id="priceSelect">
                 <option value="all">すべて</option>
@@ -179,7 +220,7 @@
         </div>
         <div class="product-grid" id="productGrid"></div>
         <div class="more-wrap"><button class="btn btn-outline" id="productMore" hidden></button></div>
-        <p class="note">※価格は参考価格です。「購入する」を押すと、楽天市場・Amazonの検索結果ページが開きます。</p>
+        <p class="note">※価格は参考価格です。写真を押すとアイテム詳細（着回しコーデ・ショップ比較）が開きます。「購入する」を押すと、楽天市場・Amazonの検索結果ページが開きます。</p>
       </div>
     </section>
 
@@ -193,6 +234,17 @@
           </div>
         </div>
         <ul class="shop-list" id="shopList"></ul>
+      </div>
+    </section>
+
+    <!-- ===== 最近見たもの（F-19） ===== -->
+    <section class="section" id="recent" hidden>
+      <div class="container">
+        <div class="section-head">
+          <h2>最近見たもの<small>RECENTLY VIEWED</small></h2>
+          <button class="link-btn" id="recentClear">履歴を消す</button>
+        </div>
+        <div class="recent-list" id="recentList"></div>
       </div>
     </section>
 

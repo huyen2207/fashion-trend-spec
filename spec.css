@@ -550,3 +550,62 @@ tbody td:first-child {
   color: var(--accent);
   font-weight: 600;
 }
+
+/* ===== 6. 機能一覧 ===== */
+.new {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.7rem;
+}
+
+.legend {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.legend .prio {
+  margin-right: 4px;
+}
+
+.prio {
+  display: inline-block;
+  min-width: 2.4em;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.prio-high {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.prio-mid {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.prio-low {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.prio-out {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.func-table {
+  min-width: 620px;
+}
+
+.func-table tr.p-out td {
+  color: var(--text-muted);
+}
