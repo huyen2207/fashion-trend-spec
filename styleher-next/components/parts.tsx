@@ -1,13 +1,24 @@
 "use client";
 
-import { ExternalLink, Heart } from "lucide-react";
+import { ExternalLink, Heart, RotateCw } from "lucide-react";
 import { motion } from "motion/react";
 import { useId, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { Option, Outfit, Post, Product, Shop, Trend } from "@/lib/data";
-import { cn, img, money, outfitPrice, SCENES } from "@/lib/utils";
+import {
+  nameOf,
+  useMasters,
+  useShopName,
+  type ApiClientError,
+  type Option,
+  type OutfitSummary,
+  type PostSummary,
+  type ProductSummary,
+  type Shop,
+  type TrendSummary,
+} from "@/lib/client/api";
+import { cn, img, money } from "@/lib/utils";
 import { Reveal } from "./motion";
 import { useStore, type FavType, type OpenType } from "./StoreProvider";
 
@@ -198,18 +209,20 @@ function ResultButton({ type, id, image, title, sub }: { type: OpenType; id: str
   );
 }
 
-export const TrendResult = ({ t }: { t: Trend }) => (
-  <ResultButton type="trend" id={t.id} image={t.img} title={t.name} sub={`トレンド · ${t.sub}`} />
+export const TrendResult = ({ t }: { t: TrendSummary }) => (
+  <ResultButton type="trend" id={t.id} image={t.image} title={t.name} sub={`トレンド · ${t.subtitle}`} />
 );
-export const OutfitResult = ({ o }: { o: Outfit }) => (
-  <ResultButton type="outfit" id={o.id} image={o.img} title={o.title} sub={`${SCENES[o.scene].name} · ${money(outfitPrice(o))}〜`} />
+export function OutfitResult({ o }: { o: OutfitSummary }) {
+  const scenes = useMasters()?.scenes;
+  return <ResultButton type="outfit" id={o.id} image={o.image} title={o.title} sub={`${nameOf(scenes, o.sceneId)} · ${money(o.totalPrice)}〜`} />;
+}
+export const ProductResult = ({ p }: { p: ProductSummary }) => (
+  <ResultButton type="product" id={p.id} image={p.image} title={p.name} sub={`アイテム · ${money(p.price)}`} />
 );
-export const ProductResult = ({ p }: { p: Product }) => (
-  <ResultButton type="product" id={p.id} image={p.img} title={p.name} sub={`アイテム · ${money(p.price)}`} />
-);
-export const PostResult = ({ p }: { p: Post }) => (
-  <ResultButton type="post" id={p.id} image={p.img} title={p.title} sub={`コラム · ${p.tag}`} />
-);
+export function PostResult({ p }: { p: PostSummary }) {
+  const tags = useMasters()?.postTags;
+  return <ResultButton type="post" id={p.id} image={p.image} title={p.title} sub={`コラム · ${nameOf(tags, p.tagId)}`} />;
+}
 export const ShopResult = ({ s }: { s: Shop }) => (
   <a
     className="flex w-full items-center gap-3 rounded-lg border bg-card p-2 transition hover:bg-secondary"
@@ -222,7 +235,7 @@ export const ShopResult = ({ s }: { s: Shop }) => (
     </span>
     <span className="min-w-0">
       <span className="block text-sm font-medium">{s.name}</span>
-      <span className="block text-xs text-muted-foreground">ショップ · {s.type}</span>
+      <span className="block text-xs text-muted-foreground">ショップ · {s.shopType}</span>
     </span>
   </a>
 );
@@ -231,22 +244,49 @@ export function ResultList({ children, className }: { children: ReactNode; class
   return <div className={cn("grid gap-2 sm:grid-cols-2", className)}>{children}</div>;
 }
 
-export function MiniProduct({ p }: { p: Product }) {
+export function MiniProduct({ p }: { p: ProductSummary }) {
   const { open } = useStore();
+  const shopName = useShopName();
   return (
     <div className="flex items-center gap-3 rounded-lg border bg-card p-2">
       <button className="shrink-0" aria-label={`${p.name}の詳細を見る`} onClick={() => open("product", p.id)}>
-        <img src={img(p.img, 120, 140)} alt="" loading="lazy" className="h-16 w-14 rounded-md object-cover" />
+        <img src={img(p.image, 120, 140)} alt="" loading="lazy" className="h-16 w-14 rounded-md object-cover" />
       </button>
       <div className="min-w-0 text-sm">
         <button className="block truncate text-left font-medium hover:text-rose" onClick={() => open("product", p.id)}>
           {p.name}
         </button>
         <span className="text-muted-foreground">{money(p.price)}</span>
-        <a href={p.url} target="_blank" rel="noopener" className="flex items-center gap-1 text-xs text-rose hover:underline">
-          {p.shop}で見る <ExternalLink className="size-3" />
+        <a href={p.purchaseUrl} target="_blank" rel="noopener" className="flex items-center gap-1 text-xs text-rose hover:underline">
+          {shopName(p.recommendedShopId) || "ショップ"}で見る <ExternalLink className="size-3" />
         </a>
       </div>
+    </div>
+  );
+}
+
+// ---------- API の読み込み中・エラー ----------
+// 読み込み中：カードの形の薄い箱を並べる
+export function LoadingGrid({ count = 4, className, itemClassName }: { count?: number; className?: string; itemClassName?: string }) {
+  return (
+    <div className={cn("grid gap-4", className)} aria-busy="true" aria-label="読み込み中">
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} className={cn("animate-pulse rounded-xl bg-secondary", itemClassName)} />
+      ))}
+    </div>
+  );
+}
+
+// 読み込めなかったとき：理由と「もう一度読み込む」ボタン
+export function LoadError({ error, onRetry, className }: { error: ApiClientError; onRetry: () => void; className?: string }) {
+  return (
+    <div role="alert" className={cn("flex flex-col items-center gap-3 py-10 text-center text-sm text-muted-foreground", className)}>
+      <p>{error.status === 404 ? "見つかりませんでした。" : error.message}</p>
+      {error.status !== 404 && (
+        <Button variant="outline" size="sm" className="rounded-full" onClick={onRetry}>
+          <RotateCw /> もう一度読み込む
+        </Button>
+      )}
     </div>
   );
 }

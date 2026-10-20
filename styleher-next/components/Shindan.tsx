@@ -8,10 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ages, outfits, scenes, tastes, trends } from "@/lib/data";
-import { ageName, load, save, SCENES, tasteName } from "@/lib/utils";
+import { apiGet, nameOf, qs, useApi, useMasters, type List, type Masters, type OutfitSummary, type Recommendations } from "@/lib/client/api";
+import { load, save } from "@/lib/utils";
 import { fadeUp } from "./motion";
-import { ChipGroup, chipClass, OutfitResult, ResultList, Section, TrendResult } from "./parts";
+import { ChipGroup, chipClass, LoadError, LoadingGrid, OutfitResult, ResultList, Section, TrendResult } from "./parts";
 import { useStore } from "./StoreProvider";
 
 // かんたんスタイル診断（F-16）
@@ -26,29 +26,14 @@ const TASTE_TYPES: Record<string, string> = {
   simple: "無駄のないすっきりした服が好きなあなた。モノトーンに素材感で奥行きを出すと、洗練された印象に。",
 };
 
-// 年代・テイスト・シーンの一致度で並べる（1つ目に選んだテイストを重視）
-function recommend(profile: Profile) {
-  const [main, sub] = profile.tastes;
-  const tasteScore = (list: string[], w: number) => (list.includes(main) ? w : 0) + (sub && list.includes(sub) ? w / 2 : 0);
-  const top = <T,>(list: T[], score: (x: T) => number, n: number) =>
-    list
-      .map((x) => ({ x, score: score(x) }))
-      .filter((r) => r.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, n)
-      .map((r) => r.x);
-  return {
-    trends: top(trends, (t) => (t.ages.includes(profile.age) ? 2 : 0) + tasteScore(t.tastes, 4), 2),
-    outfits: top(
-      outfits,
-      (o) => (o.scene === profile.scene ? 4 : 0) + (o.ages.includes(profile.age) ? 2 : 0) + tasteScore(o.tastes, 2),
-      4
-    ),
-  };
-}
-
-const isValid = (p: Profile | null): p is Profile =>
-  !!p && ages.some((a) => a.id === p.age) && !!SCENES[p.scene] && Array.isArray(p.tastes) && p.tastes.length > 0;
+// 保存した結果が、今のマスタで使える答えか（使えなければ質問から）
+const isValid = (p: Profile | null, m: Masters): p is Profile =>
+  !!p &&
+  m.ages.some((a) => a.id === p.age) &&
+  m.scenes.some((s) => s.id === p.scene) &&
+  Array.isArray(p.tastes) &&
+  p.tastes.length > 0 &&
+  p.tastes.every((x) => m.tastes.some((t) => t.id === x));
 
 function Question({ no, title, note, children }: { no: string; title: string; note?: string; children: ReactNode }) {
   return (
@@ -67,15 +52,21 @@ function Question({ no, title, note, children }: { no: string; title: string; no
 
 export function Shindan() {
   const { setOutfitFilter } = useStore();
+  const masters = useMasters();
+  const ages = masters?.ages ?? [];
+  const tastes = masters?.tastes ?? [];
+  const scenes = masters?.scenes ?? [];
   const [age, setAge] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
   const [scene, setScene] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
 
+  // 保存した結果は、マスタを読み込んでから確かめる
   useEffect(() => {
+    if (!masters) return;
     const saved = load<Profile | null>(PROFILE_KEY, null);
-    if (isValid(saved)) setProfile(saved);
-  }, []);
+    if (isValid(saved, masters)) setProfile(saved);
+  }, [masters]);
 
   const onTastes = (next: string[]) => {
     if (next.length > 2) toast("テイストは2つまで選べます");
@@ -101,14 +92,23 @@ export function Shindan() {
     save(PROFILE_KEY, null);
   };
 
-  const apply = (p: Profile) => {
-    // 結果が0件にならないテイストを選ぶ（なければテイストは「すべて」）
-    const fits = (taste: string) => outfits.some((o) => o.scene === p.scene && o.ages.includes(p.age) && o.tastes.includes(taste));
-    setOutfitFilter({ scene: p.scene, age: p.age, taste: p.tastes.find(fits) || "all" });
+  const apply = async (p: Profile) => {
+    // 結果が0件にならないテイストを選ぶ（なければテイストは「すべて」）。件数は API（A-04）で確かめる
+    let taste = "all";
+    for (const x of p.tastes) {
+      const r = await apiGet<List<OutfitSummary>>(`/outfits${qs({ scene: p.scene, age: p.age, taste: x })}`).catch(() => null);
+      if (r?.items.length) {
+        taste = x;
+        break;
+      }
+    }
+    setOutfitFilter({ scene: p.scene, age: p.age, taste });
     document.getElementById("outfits")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const result = profile && recommend(profile);
+  // おすすめは API（A-13）で決める（1つ目のテイストを重視する点数方式）
+  const rec = useApi<Recommendations>(profile ? `/recommendations${qs({ age: profile.age, tastes: profile.tastes.join(","), scene: profile.scene })}` : null);
+  const result = rec.data;
 
   return (
     <Section id="shindan">
@@ -132,7 +132,7 @@ export function Shindan() {
         <CardContent className="bg-card p-6 md:p-10">
           {/* 質問 ⇄ 結果 を切り替えるときに、ふわっと入れ替える */}
           <AnimatePresence mode="wait" initial={false}>
-            {!profile || !result ? (
+            {!profile ? (
               <motion.form
                 key="form"
                 noValidate
@@ -172,27 +172,35 @@ export function Shindan() {
               >
                 <motion.div variants={fadeUp}>
                   <p className="font-serif text-xs tracking-[0.2em] text-rose">
-                    RESULT · {ageName(profile.age)} · {SCENES[profile.scene].name}
+                    RESULT · {nameOf(ages, profile.age)} · {nameOf(scenes, profile.scene)}
                   </p>
-                  <h3 className="mt-1 text-2xl font-semibold">あなたは「{profile.tastes.map(tasteName).join("×")}」タイプ</h3>
+                  <h3 className="mt-1 text-2xl font-semibold">あなたは「{profile.tastes.map((x) => nameOf(tastes, x)).join("×")}」タイプ</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{TASTE_TYPES[profile.tastes[0]]}</p>
                 </motion.div>
-                <motion.div variants={fadeUp}>
-                  <h4 className="mb-2 text-sm font-medium">あなたにおすすめのトレンド</h4>
-                  <ResultList>
-                    {result.trends.map((t) => (
-                      <TrendResult key={t.id} t={t} />
-                    ))}
-                  </ResultList>
-                </motion.div>
-                <motion.div variants={fadeUp}>
-                  <h4 className="mb-2 text-sm font-medium">あなたにおすすめのコーデ</h4>
-                  <ResultList>
-                    {result.outfits.map((o) => (
-                      <OutfitResult key={o.id} o={o} />
-                    ))}
-                  </ResultList>
-                </motion.div>
+                {rec.error ? (
+                  <LoadError error={rec.error} onRetry={rec.reload} className="py-4" />
+                ) : !result ? (
+                  <LoadingGrid count={4} className="sm:grid-cols-2" itemClassName="h-[74px] rounded-lg" />
+                ) : (
+                  <>
+                    <motion.div variants={fadeUp} initial="hidden" animate="show">
+                      <h4 className="mb-2 text-sm font-medium">あなたにおすすめのトレンド</h4>
+                      <ResultList>
+                        {result.trends.map((t) => (
+                          <TrendResult key={t.id} t={t} />
+                        ))}
+                      </ResultList>
+                    </motion.div>
+                    <motion.div variants={fadeUp} initial="hidden" animate="show">
+                      <h4 className="mb-2 text-sm font-medium">あなたにおすすめのコーデ</h4>
+                      <ResultList>
+                        {result.outfits.map((o) => (
+                          <OutfitResult key={o.id} o={o} />
+                        ))}
+                      </ResultList>
+                    </motion.div>
+                  </>
+                )}
                 <motion.div variants={fadeUp} className="flex flex-wrap gap-2">
                   <Button className="rounded-full" onClick={() => apply(profile)}>
                     この条件でコーデを見る <ArrowRight />

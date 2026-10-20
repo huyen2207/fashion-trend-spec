@@ -4,10 +4,10 @@ import { ArrowRight, Flower2, HelpCircle, Images, MessageCircle } from "lucide-r
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { community } from "@/lib/data";
+import { useApi, type CommunityImage, type List } from "@/lib/client/api";
 import { img } from "@/lib/utils";
 import { Reveal, Stagger, StaggerItem } from "./motion";
-import { Section } from "./parts";
+import { LoadingGrid, Section } from "./parts";
 
 const PERKS = [
   { icon: Images, text: "コーデをシェア" },
@@ -17,6 +17,8 @@ const PERKS = [
 ];
 
 export function Community() {
+  // ギャラリーの画像は API（A-12）から読む。読み込めなかったときは画像なしで表示する
+  const images = useApi<List<CommunityImage>>("/community-images").data?.items;
   return (
     <Section id="community">
       <Reveal>
@@ -33,13 +35,17 @@ export function Community() {
               参加する <ArrowRight />
             </Button>
           </div>
+          {!images ? (
+            <LoadingGrid count={8} className="grid-cols-4 gap-1 p-1" itemClassName="aspect-[6/7] rounded-lg" />
+          ) : (
           <Stagger className="grid grid-cols-4 gap-1 p-1" gap={0.05}>
-            {community.map((id) => (
-              <StaggerItem key={id}>
-                <img src={img(id, 240, 280)} alt="StyleHerコミュニティのコーデ" loading="lazy" className="aspect-[6/7] size-full rounded-lg object-cover" />
+            {images.map((c) => (
+              <StaggerItem key={c.id}>
+                <img src={img(c.image, 240, 280)} alt="StyleHerコミュニティのコーデ" loading="lazy" className="aspect-[6/7] size-full rounded-lg object-cover" />
               </StaggerItem>
             ))}
           </Stagger>
+          )}
         </Card>
       </Reveal>
       <ul className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">

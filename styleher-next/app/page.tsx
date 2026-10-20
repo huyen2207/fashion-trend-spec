@@ -5,13 +5,12 @@ import { Community } from "@/components/Community";
 import { Hero } from "@/components/Hero";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { OutfitSection } from "@/components/OutfitSection";
-import { Section, SectionHeading } from "@/components/parts";
 import { PostSection } from "@/components/PostSection";
 import { ProductSection } from "@/components/ProductSection";
 import { RecentSection } from "@/components/RecentSection";
 import { Shindan } from "@/components/Shindan";
+import { ShopSection } from "@/components/ShopSection";
 import { TrendSection } from "@/components/TrendSection";
-import { shops } from "@/lib/data";
 import { SPEC_URL } from "@/lib/links";
 
 const FEATURES = [
@@ -79,26 +78,7 @@ export default function Home() {
 
       <ProductSection />
 
-      {/* 人気ショップ */}
-      <Section className="pt-0 md:pt-0">
-        <SectionHeading title="人気ショップ" en="SHOP" sub="定番ブランドから通販サイトまで。公式サイトへすぐ移動できます。" />
-        <Stagger className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" gap={0.04}>
-          {shops.map((s) => (
-            <StaggerItem key={s.name}>
-              <a
-                href={s.url}
-                target="_blank"
-                rel="noopener"
-                aria-label={`${s.name}（公式サイトを開く）`}
-                className="flex h-full flex-col items-center justify-center gap-1 rounded-xl border bg-card p-4 text-center transition hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <span className="font-serif text-lg font-semibold">{s.name}</span>
-                <span className="text-xs text-muted-foreground">{s.type}</span>
-              </a>
-            </StaggerItem>
-          ))}
-        </Stagger>
-      </Section>
+      <ShopSection />
 
       <RecentSection />
       <PostSection />

@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Fragment, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { heroSlides } from "@/lib/data";
+import { useApi, type HeroSlide, type List } from "@/lib/client/api";
 import { cn, img } from "@/lib/utils";
 import { useStore } from "./StoreProvider";
 
@@ -19,10 +19,13 @@ export function Hero() {
   const [index, setIndex] = useState(0);
   // 手動で切り替えたあとは、自動送りの間隔を長くする
   const [manual, setManual] = useState(false);
+  // スライドは API（A-11）から読む。読み込むまでは背景色だけを出す
+  const heroSlides = useApi<List<HeroSlide>>("/hero-slides").data?.items ?? [];
   const n = heroSlides.length;
   const slide = heroSlides[index];
 
   useEffect(() => {
+    if (!n) return;
     const timer = setInterval(() => setIndex((i) => (i + 1) % n), manual ? 9000 : 6000);
     return () => clearInterval(timer);
   }, [index, manual, n]);
@@ -37,10 +40,10 @@ export function Hero() {
       <div className="relative isolate flex min-h-[480px] items-end overflow-hidden rounded-3xl bg-primary md:min-h-[560px] md:items-center">
         {heroSlides.map((s, i) => (
           <motion.img
-            key={s.img}
-            src={img(s.img, 1800)}
+            key={s.id}
+            src={img(s.image, 1800)}
             alt=""
-            style={{ objectPosition: s.pos || "center 30%" }}
+            style={{ objectPosition: s.imagePosition }}
             className="absolute inset-0 -z-10 size-full object-cover"
             initial={false}
             animate={i === index ? { opacity: 1, scale: 1.08 } : { opacity: 0, scale: 1 }}
@@ -57,6 +60,7 @@ export function Hero() {
             </Badge>
           )}
           <AnimatePresence mode="wait" initial={false}>
+            {slide && (
             <motion.div
               key={index}
               initial="hidden"
@@ -75,9 +79,10 @@ export function Hero() {
                 ))}
               </h1>
               <motion.p className="mt-4 text-sm text-white/85 md:text-base" variants={heroLine}>
-                {slide.text}
+                {slide.body}
               </motion.p>
             </motion.div>
+            )}
           </AnimatePresence>
           <Button asChild size="lg" className="mt-6 rounded-full bg-white text-foreground hover:bg-white/90">
             <a href="#trends">
@@ -103,7 +108,7 @@ export function Hero() {
           <div className="flex gap-1.5">
             {heroSlides.map((s, i) => (
               <button
-                key={s.img}
+                key={s.id}
                 aria-label={`画像 ${i + 1}`}
                 aria-current={i === index}
                 onClick={() => show(i)}

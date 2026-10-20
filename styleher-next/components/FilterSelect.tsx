@@ -1,7 +1,7 @@
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Option } from "@/lib/data";
+import type { Option } from "@/lib/client/api";
 
 // ラベル付きの選択ボックス（テイスト・カラー・並び替え・価格）
 export function FilterSelect({

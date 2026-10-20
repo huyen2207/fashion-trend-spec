@@ -96,7 +96,10 @@ type Options = {
 };
 export type Handler = (req: NextRequest, ctx: { params: Promise<Record<string, string | string[]>> }) => Promise<Response>;
 
-const PUBLIC_CACHE = "public, max-age=60, s-maxage=300, stale-while-revalidate=86400";
+// ブラウザは60秒だけ使う。古い結果を出しながら取り直す（stale-while-revalidate）のは CDN だけにする。
+// ブラウザでも使うと、「もっと見る」で古いページと新しいページがつながり、抜けや重複が起きるため（docs/api.md 3.7）
+const PUBLIC_CACHE = "public, max-age=60";
+const PUBLIC_CDN_CACHE = "public, max-age=300, stale-while-revalidate=86400";
 
 export function api(fn: (c: Ctx) => Promise<Response> | Response, options: Options = {}): Handler {
   const { auth = "none", cache = "none" } = options;
@@ -115,6 +118,7 @@ export function api(fn: (c: Ctx) => Promise<Response> | Response, options: Optio
       res = await fn({ req, params, user, requestId });
       for (const [k, v] of Object.entries(rateHeaders)) res.headers.set(k, v);
       res.headers.set("Cache-Control", cache === "public" ? PUBLIC_CACHE : "no-store");
+      if (cache === "public") res.headers.set("CDN-Cache-Control", PUBLIC_CDN_CACHE);
       if (cache === "public" && res.status === 200) res = await withEtag(req, res);
     } catch (e) {
       res = errorResponse(e, requestId);

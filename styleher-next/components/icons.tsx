@@ -1,7 +1,7 @@
 import { Briefcase, Heart, House, Plane, ShoppingBag, Sparkles, type LucideIcon } from "lucide-react";
-import type { SceneIcon } from "@/lib/data";
+import type { SceneIcon } from "@/lib/client/api";
 
-// シーンのアイコン（data.ts の icon 名 → lucide のアイコン）
+// シーンのアイコン（API のシーンの icon 名 → lucide のアイコン）
 export const SCENE_ICONS: Record<SceneIcon, LucideIcon> = {
   briefcase: Briefcase,
   bag: ShoppingBag,

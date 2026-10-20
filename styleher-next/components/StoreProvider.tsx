@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { scenes, trends } from "@/lib/data";
+import { useApi, useMasters, type List, type TrendSummary } from "@/lib/client/api";
 import { load, save } from "@/lib/utils";
 
 // お気に入りにできる種類と、詳細モーダルで開ける種類
@@ -53,7 +53,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [favs, setFavs] = useState<Favs>({ trend: [], outfit: [], product: [] });
   const [recent, setRecent] = useState<string[]>([]);
   const [modal, setModal] = useState<ModalState>(null);
-  const [outfitFilter, setOutfitFilter] = useState<OutfitFilter>({ scene: scenes[0].id, age: "all", taste: "all" });
+  // シーンの初期値（最初のシーン）は、マスタを API から読み込んだあとに決める
+  const [outfitFilter, setOutfitFilter] = useState<OutfitFilter>({ scene: "", age: "all", taste: "all" });
+  const firstScene = useMasters()?.scenes[0]?.id;
+  if (firstScene && !outfitFilter.scene) setOutfitFilter({ ...outfitFilter, scene: firstScene });
+  // 「今日の注目」は、公開中のトレンドの並び順から決める（docs/db.md 7.1）
+  const trends = useApi<List<TrendSummary>>("/trends").data?.items;
 
   // ブラウザに保存した内容は、表示後に読み込む（サーバーで作ったHTMLとずれないように）
   useEffect(() => {
@@ -98,7 +103,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       todayText: today
         ? today.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", weekday: "short" })
         : "",
-      todayTrendId: trends[dayNumber % trends.length].id,
+      todayTrendId: trends?.length ? trends[dayNumber % trends.length].id : "",
       favs,
       isFav,
       toggleFav,
@@ -112,7 +117,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       outfitFilter,
       setOutfitFilter,
     };
-  }, [today, favs, isFav, toggleFav, recent, clearRecent, modal, open, outfitFilter]);
+  }, [today, trends, favs, isFav, toggleFav, recent, clearRecent, modal, open, outfitFilter]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

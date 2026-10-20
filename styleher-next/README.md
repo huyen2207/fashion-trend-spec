@@ -20,7 +20,8 @@ API（`app/api`）を動かすため、静的サイトとしての書き出し�
 [API設計書](../docs/api.md) にもとづく Web API です。**データベースにはつながず**、`lib/data.ts` から作ったダミーデータをサーバーのメモリに持ちます。登録・変更はサーバーを再起動すると元に戻ります。
 
 - URL：`http://localhost:3000/api/v1/...`（稼働確認だけ `/api/health`）
-- 画面はまだ `lib/data.ts` を直接読んでいます。画面からAPIを使うように切り替えるのは別の作業です。
+- 画面（トップページ・詳細・検索・診断）は、このAPIからデータを取って表示します（`lib/client/`）。`lib/data.ts` は、APIのダミーデータの元としてだけ使います。
+- お気に入り・最近見たもの・診断結果は、ログイン機能ができるまでブラウザ（localStorage）に保存します。表示する内容は、保存したIDで API から取ります。
 
 **ログインの代わり（ダミーのトークン）**
 
@@ -63,6 +64,8 @@ curl -H "Authorization: Bearer dummy-member-token" http://localhost:3000/api/v1/
 | `lib/api/serializers.ts` | レスポンスの形（TrendSummary など）、購入リンク・着回し数・合計金額の計算 |
 | `lib/api/admin.ts` | 管理APIで扱うリソースの入力チェックと、変更履歴 |
 | `lib/api/member.ts` / `recommend.ts` / `query.ts` / `tokens.ts` / `mail.ts` | 会員API・診断のおすすめ・マスタIDの確認・メールマガジンのトークン・ダミーのメール |
+| `lib/client/api.ts` | 画面から API を呼ぶ仕組み（`useApi`）：レスポンスの型、読み込み中・エラーの状態、同じURLの結果の再利用 |
+| `lib/client/useItems.ts` | お気に入り・最近見たもののIDから、表示用の内容をまとめて取る |
 
 ## ファイル構成
 
@@ -73,8 +76,9 @@ curl -H "Authorization: Bearer dummy-member-token" http://localhost:3000/api/v1/
 | `app/contact/page.tsx` | お問い合わせページ（`/contact`） |
 | `app/globals.css` | Tailwind CSS と、StyleHer の色・フォント（shadcn/ui のテーマ） |
 | `components/ui/` | shadcn/ui のコンポーネント（`npx shadcn@latest add ◯◯` で追加） |
-| `lib/data.ts` | 表示するデータ（トレンド・コーデ・アイテムなど）。毎日の更新はここを書き換える |
+| `lib/data.ts` | APIのダミーデータの元（トレンド・コーデ・アイテムなど）。毎日の更新はここを書き換える |
 | `lib/utils.ts` | 画像URL・価格表示・ブラウザ保存などの共通処理 |
+| `components/ShopSection.tsx` | 人気ショップ（API から読む） |
 | `components/StoreProvider.tsx` | お気に入り・最近見たもの・ダイアログの状態管理 |
 | `components/Overlays.tsx` | 詳細（トレンド・コーデ・アイテム・コラム）・検索のダイアログと、お気に入りのシート |
 | `components/ContactForm.tsx` | お問い合わせフォーム |

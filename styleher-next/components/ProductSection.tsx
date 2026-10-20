@@ -2,47 +2,42 @@
 
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { AnimatePresence } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { categories, products, type Product } from "@/lib/data";
-import { CATS, img, money, wearCount } from "@/lib/utils";
+import { apiGet, ApiClientError, nameOf, qs, useMasters, useShopName, type Page, type ProductSummary } from "@/lib/client/api";
+import { img, money } from "@/lib/utils";
 import { FilterSelect } from "./FilterSelect";
 import { Stagger, StaggerItem } from "./motion";
-import { ChipGroup, HeartButton, Section, SectionHeading } from "./parts";
+import { ChipGroup, HeartButton, LoadError, LoadingGrid, Section, SectionHeading } from "./parts";
 import { useStore } from "./StoreProvider";
 
 const PAGE = 10;
-const INITIAL = { cat: "all", color: "all", price: "all", sort: "recommend" };
-const COLORS = [{ id: "all", name: "すべて" }, ...[...new Set(products.map((p) => p.color))].map((c) => ({ id: c, name: c }))];
+// 並び替え（F-08）。id は API（A-06）の sort の値
 const SORTS = [
-  { id: "recommend", name: "おすすめ順" },
-  { id: "price-asc", name: "価格が安い順" },
-  { id: "price-desc", name: "価格が高い順" },
-  { id: "wear", name: "着回しできる順" },
+  { id: "recommended", name: "おすすめ順" },
+  { id: "price_asc", name: "価格が安い順" },
+  { id: "price_desc", name: "価格が高い順" },
+  { id: "wear_count_desc", name: "着回しできる順" },
 ];
+// 価格帯 → API の minPrice・maxPrice（docs/api.md 5.6）
 const PRICES = [
-  { id: "all", name: "すべて" },
-  { id: "0-2999", name: "〜¥2,999" },
-  { id: "3000-6999", name: "¥3,000〜¥6,999" },
-  { id: "7000-9999999", name: "¥7,000〜" },
+  { id: "all", name: "すべて", min: undefined, max: undefined },
+  { id: "0-2999", name: "〜¥2,999", min: undefined, max: 2999 },
+  { id: "3000-6999", name: "¥3,000〜¥6,999", min: 3000, max: 6999 },
+  { id: "7000-", name: "¥7,000〜", min: 7000, max: undefined },
 ];
 
-// 並び替え（F-08）
-const SORTERS: Record<string, (a: Product, b: Product) => number> = {
-  "price-asc": (a, b) => a.price - b.price,
-  "price-desc": (a, b) => b.price - a.price,
-  wear: (a, b) => wearCount(b.id) - wearCount(a.id),
-};
-
-function ProductCard({ p }: { p: Product }) {
+function ProductCard({ p }: { p: ProductSummary }) {
   const { open } = useStore();
-  const wear = wearCount(p.id);
+  const masters = useMasters();
+  const shopName = useShopName();
+  const wear = p.wearCount;
   return (
     <Card className="group h-full gap-0 overflow-hidden py-0 transition hover:-translate-y-0.5 hover:shadow-md">
       <button className="relative block aspect-[10/11] overflow-hidden" aria-label={`${p.name}の詳細を見る`} onClick={() => open("product", p.id)}>
-        <img src={img(p.img, 400, 440)} alt={p.name} loading="lazy" className="size-full object-cover transition duration-500 group-hover:scale-105" />
+        <img src={img(p.image, 400, 440)} alt={p.name} loading="lazy" className="size-full object-cover transition duration-500 group-hover:scale-105" />
         {wear > 0 && (
           <Badge variant="secondary" className="absolute bottom-2 left-2 bg-white/90">
             着回し {wear}コーデ
@@ -54,14 +49,14 @@ function ProductCard({ p }: { p: Product }) {
           {p.name}
         </button>
         <p className="text-[11px] text-muted-foreground">
-          {CATS[p.cat].name} · {p.color} · {p.shop}
+          {nameOf(masters?.categories, p.categoryId)} · {nameOf(masters?.colors, p.colorId)} · {shopName(p.recommendedShopId)}
         </p>
         <div className="mt-auto flex items-center justify-between">
           <span className="font-serif text-lg font-semibold">{money(p.price)}</span>
           <HeartButton type="product" id={p.id} />
         </div>
         <Button asChild size="sm" className="rounded-full">
-          <a href={p.url} target="_blank" rel="noopener">
+          <a href={p.purchaseUrl} target="_blank" rel="noopener">
             購入する <ExternalLink />
           </a>
         </Button>
@@ -70,24 +65,56 @@ function ProductCard({ p }: { p: Product }) {
   );
 }
 
+const INITIAL = { cat: "all", color: "all", price: "all", sort: "recommended" };
+
 export function ProductSection() {
+  const masters = useMasters();
+  const categories = [{ id: "all", name: "すべて" }, ...(masters?.categories ?? [])];
+  const COLORS = [{ id: "all", name: "すべて" }, ...(masters?.colors ?? [])];
   const [state, setState] = useState(INITIAL);
-  const [limit, setLimit] = useState(PAGE);
-  // 条件を変えたら、表示件数を最初に戻す
-  const set = (patch: Partial<typeof INITIAL>) => {
-    setState({ ...state, ...patch });
-    setLimit(PAGE);
+  const set = (patch: Partial<typeof INITIAL>) => setState({ ...state, ...patch });
+
+  // 絞り込み・並び替えは API（A-06）で行い、10件ずつ取る。「もっと見る」で次の10件を足す
+  const price = PRICES.find((x) => x.id === state.price) ?? PRICES[0];
+  const query = qs({ category: state.cat, color: state.color, minPrice: price.min, maxPrice: price.max, sort: state.sort, limit: PAGE });
+  const [pages, setPages] = useState<{ query: string; items: ProductSummary[]; total: number } | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<{ query: string; error: ApiClientError } | null>(null);
+  const [nonce, setNonce] = useState(0);
+
+  // 条件を変えたら、1ページ目から取り直す
+  useEffect(() => {
+    let alive = true;
+    apiGet<Page<ProductSummary>>(`/products${query}&offset=0`).then(
+      (r) => alive && (setPages({ query, items: r.items, total: r.total }), setError(null)),
+      (e: ApiClientError) => alive && setError({ query, error: e })
+    );
+    return () => {
+      alive = false;
+    };
+  }, [query, nonce]);
+
+  const more = async () => {
+    if (!pages) return;
+    setLoadingMore(true);
+    try {
+      const r = await apiGet<Page<ProductSummary>>(`/products${pages.query}&offset=${pages.items.length}`);
+      // 読み込みの間にデータが変わってページがずれても、同じアイテムを2回出さない
+      setPages((p) => {
+        if (!p || p.query !== pages.query) return p;
+        const seen = new Set(p.items.map((x) => x.id));
+        return { ...p, items: [...p.items, ...r.items.filter((x) => !seen.has(x.id))], total: r.total };
+      });
+    } catch (e) {
+      setError({ query: pages.query, error: e as ApiClientError });
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
-  const [min, max] = state.price === "all" ? [0, Infinity] : state.price.split("-").map(Number);
-  const list = products.filter(
-    (p) =>
-      (state.cat === "all" || p.cat === state.cat) &&
-      (state.color === "all" || p.color === state.color) &&
-      p.price >= min &&
-      p.price <= max
-  );
-  if (SORTERS[state.sort]) list.sort(SORTERS[state.sort]);
+  const list = pages?.items;
+  const rest = pages ? pages.total - pages.items.length : 0;
+  const shownError = error?.query === query ? error.error : undefined;
 
   return (
     <Section id="products">
@@ -106,10 +133,14 @@ export function ProductSection() {
         </div>
       </div>
 
-      {list.length ? (
+      {shownError ? (
+        <LoadError error={shownError} onRetry={() => setNonce((n) => n + 1)} />
+      ) : !list ? (
+        <LoadingGrid count={10} className="grid-cols-2 md:grid-cols-3 lg:grid-cols-5" itemClassName="aspect-[10/17]" />
+      ) : list.length ? (
         <Stagger className="relative grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5" gap={0.05}>
           <AnimatePresence mode="popLayout">
-            {list.slice(0, limit).map((p) => (
+            {list.map((p) => (
               <StaggerItem key={p.id}>
                 <ProductCard p={p} />
               </StaggerItem>
@@ -120,10 +151,10 @@ export function ProductSection() {
         <p className="py-10 text-center text-muted-foreground">条件に合うアイテムがありません。</p>
       )}
 
-      {list.length > limit && (
+      {rest > 0 && !shownError && (
         <div className="mt-8 text-center">
-          <Button variant="outline" className="rounded-full px-8" onClick={() => setLimit(limit + PAGE)}>
-            もっと見る（残り{list.length - limit}件）
+          <Button variant="outline" className="rounded-full px-8" disabled={loadingMore} onClick={more}>
+            {loadingMore ? "読み込み中…" : `もっと見る（残り${rest}件）`}
           </Button>
         </div>
       )}
