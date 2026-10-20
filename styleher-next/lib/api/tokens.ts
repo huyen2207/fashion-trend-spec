@@ -1,7 +1,7 @@
 // メールマガジンの確認・配信停止のトークン（docs/api.md 6.2）
 // 登録ID・変えてよい状態・有効期限をサーバーの秘密の鍵で署名したもの。DBには保存しない。
 import { createHmac, timingSafeEqual } from "node:crypto";
-import type { NewsletterStatus } from "./store";
+import type { NewsletterStatus } from "./catalog";
 
 // 本番では必ず環境変数で設定する。ダミー版では未設定なら開発用の鍵を使う
 const SECRET = process.env.NEWSLETTER_TOKEN_SECRET ?? "styleher-dev-only-secret";

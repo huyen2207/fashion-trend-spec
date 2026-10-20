@@ -1,22 +1,26 @@
 // D-02 1件の取得 / D-04 更新（全項目） / D-05 一部の項目を変える
 // DELETE は作らない（削除の代わりに非公開にする）。送られたら 405
-import { findRow, productUsage, RESOURCES, snapshot, touch, writeAudit, type ResourceDef, type Row } from "@/lib/api/admin";
+import { findRow, inAuditedTransaction, productUsage, RESOURCES, type ResourceDef, type Row } from "@/lib/api/admin";
+import { loadCatalog, type Catalog } from "@/lib/api/catalog";
 import { api, checkIfMatch, errors, etagOf, json, readJson, route, Validator } from "@/lib/api/http";
 
-function target(params: Record<string, string>): { def: ResourceDef; row: Row; etag: string } {
+async function target(params: Record<string, string>): Promise<{ def: ResourceDef; row: Row; etag: string; catalog: Catalog }> {
   const def = RESOURCES[params.resource];
   if (!def) throw errors.notFound("APIが見つかりません。URLを確認してください。");
-  const row = findRow(def, params.id);
+  const catalog = await loadCatalog();
+  const row = findRow(def, catalog, params.id);
   if (!row) throw errors.notFound();
-  return { def, row, etag: etagOf(`${def.table}:${row.id}`, row.updatedAt) };
+  return { def, row, etag: etagOf(`${def.table}:${row.id}`, row.updatedAt), catalog };
 }
 
 const withEtag = (def: ResourceDef, row: Row) => json(row, 200, { ETag: etagOf(`${def.table}:${row.id}`, row.updatedAt) });
+// 保存したあとの行を読み直して返す（updated_at はトリガーが更新する）
+const reload = async (def: ResourceDef, id: string | number) => withEtag(def, findRow(def, await loadCatalog(), String(id))!);
 
 export const { GET, POST, PUT, PATCH, DELETE } = route({
   GET: api(
-    ({ params }) => {
-      const { def, row } = target(params);
+    async ({ params }) => {
+      const { def, row } = await target(params);
       return withEtag(def, row);
     },
     { auth: "admin" }
@@ -24,25 +28,23 @@ export const { GET, POST, PUT, PATCH, DELETE } = route({
 
   PUT: api(
     async ({ req, params, user }) => {
-      const { def, row, etag } = target(params);
+      const { def, row, etag, catalog } = await target(params);
       checkIfMatch(req, etag);
       const body = await readJson(req);
       const v = new Validator();
       // IDは変えられない（本文の id は無視する）
-      const data = def.parse(body, v, row.id);
+      const data = def.parse(body, v, catalog, row.id);
       v.check();
-      const before = snapshot(row);
-      Object.assign(row, data);
-      touch(row);
-      writeAudit(user!.id, def.table, "update", before, row);
-      return withEtag(def, row);
+      // 変更履歴（update）は DB のトリガーが記録する
+      await inAuditedTransaction(user!.id, (tx) => def.save(tx, row.id, data, false));
+      return reload(def, row.id);
     },
     { auth: "admin" }
   ),
 
   PATCH: api(
     async ({ req, params, user }) => {
-      const { def, row, etag } = target(params);
+      const { def, row, etag, catalog } = await target(params);
       checkIfMatch(req, etag);
       const body = await readJson(req);
       const v = new Validator();
@@ -58,16 +60,13 @@ export const { GET, POST, PUT, PATCH, DELETE } = route({
 
       // 公開中のコーデ・トレンドで使っているアイテムを非公開にするときは確認する（?force=true で続ける）
       if (def.table === "products" && row.isPublished && changes.isPublished === false && !force) {
-        const usage = productUsage(String(row.id));
+        const usage = productUsage(catalog, String(row.id));
         if (usage.outfitIds.length || usage.trendIds.length)
           throw errors.conflict("PRODUCT_IN_USE", "このアイテムは公開中のコーデ・トレンドで使われています。", usage);
       }
 
-      const before = snapshot(row);
-      Object.assign(row, changes);
-      touch(row);
-      writeAudit(user!.id, def.table, "update", before, row);
-      return withEtag(def, row);
+      await inAuditedTransaction(user!.id, (tx) => def.patch(tx, row.id, changes));
+      return reload(def, row.id);
     },
     { auth: "admin" }
   ),

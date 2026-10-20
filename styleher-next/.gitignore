@@ -3,3 +3,9 @@ node_modules/
 out/
 next-env.d.ts
 *.tsbuildinfo
+
+/lib/generated/prisma
+
+# 接続文字列などの秘密情報（.env.example だけをコミットする）
+.env
+.env*.local

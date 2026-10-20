@@ -1,0 +1,557 @@
+// StyleHer のDBスキーマ（docs/db.md）。
+// テーブル名・列名は DB のスネークケースのまま @@map / @map で対応づけ、
+// アプリからはモデル名を PascalCase、項目名を camelCase で使う。
+//
+// 次のものは Prisma のスキーマでは表せないため、マイグレーションの SQL に直接書いている
+// （prisma/migrations/20261006000000_init/migration.sql）。
+//   - 文字列IDのドメイン code_id（英小文字・数字・_ のみ）
+//   - CHECK 制約（ck_*）
+//   - 大文字・小文字を区別しない一意インデックス（uq_users_email、uq_newsletter_subscriptions_email）
+//   - コミット時に確認する外部キー（fk_products_recommended_link）
+//   - トリガー（updated_at の自動更新、変更履歴 audit_logs の記録）
+// `prisma migrate dev` で新しいマイグレーションを作ったら、これらを消す SQL が入っていないか確認すること。
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../lib/generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ===== 1. マスタ =====
+
+model Scene {
+  id            String         @id @db.VarChar(30)
+  name          String         @unique @db.VarChar(30)
+  icon          String         @db.VarChar(20)
+  sortOrder     Int            @default(0) @map("sort_order") @db.SmallInt
+  isPublished   Boolean        @default(true) @map("is_published")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  outfits       Outfit[]
+  styleProfiles StyleProfile[]
+
+  @@map("scenes")
+}
+
+model Age {
+  id            String         @id @db.VarChar(30)
+  name          String         @unique @db.VarChar(30)
+  sortOrder     Int            @default(0) @map("sort_order") @db.SmallInt
+  isPublished   Boolean        @default(true) @map("is_published")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  trendAges     TrendAge[]
+  outfitAges    OutfitAge[]
+  styleProfiles StyleProfile[]
+
+  @@map("ages")
+}
+
+model Taste {
+  id                 String              @id @db.VarChar(30)
+  name               String              @unique @db.VarChar(30)
+  sortOrder          Int                 @default(0) @map("sort_order") @db.SmallInt
+  isPublished        Boolean             @default(true) @map("is_published")
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
+  trendTastes        TrendTaste[]
+  outfitTastes       OutfitTaste[]
+  styleProfileTastes StyleProfileTaste[]
+
+  @@map("tastes")
+}
+
+model Category {
+  id          String    @id @db.VarChar(30)
+  name        String    @unique @db.VarChar(30)
+  sortOrder   Int       @default(0) @map("sort_order") @db.SmallInt
+  isPublished Boolean   @default(true) @map("is_published")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Color {
+  id          String    @id @db.VarChar(30)
+  name        String    @unique @db.VarChar(30)
+  sortOrder   Int       @default(0) @map("sort_order") @db.SmallInt
+  isPublished Boolean   @default(true) @map("is_published")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  products    Product[]
+
+  @@map("colors")
+}
+
+model PostTag {
+  id          String   @id @db.VarChar(30)
+  name        String   @unique @db.VarChar(30)
+  sortOrder   Int      @default(0) @map("sort_order") @db.SmallInt
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  posts       Post[]
+
+  @@map("post_tags")
+}
+
+model InquiryType {
+  id               String           @id @db.VarChar(30)
+  name             String           @unique @db.VarChar(50)
+  sortOrder        Int              @default(0) @map("sort_order") @db.SmallInt
+  isPublished      Boolean          @default(true) @map("is_published")
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
+  contactInquiries ContactInquiry[]
+
+  @@map("inquiry_types")
+}
+
+// ===== 2. ショップ・アイテム =====
+
+model Shop {
+  id                  String        @id @db.VarChar(30)
+  name                String        @unique @db.VarChar(50)
+  url                 String        @db.VarChar(500)
+  shopType            String        @map("shop_type") @db.VarChar(30)
+  /// 購入リンクを作るときの型。{q} を検索キーワードに置き換える
+  searchUrlTemplate   String?       @map("search_url_template") @db.VarChar(500)
+  sortOrder           Int           @default(0) @map("sort_order")
+  isPublished         Boolean       @default(true) @map("is_published")
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
+  productLinks        ProductLink[]
+  recommendedProducts Product[]
+
+  @@map("shops")
+}
+
+model Product {
+  id                String          @id @db.VarChar(30)
+  name              String          @db.VarChar(100)
+  categoryId        String          @map("category_id") @db.VarChar(30)
+  colorId           String          @map("color_id") @db.VarChar(30)
+  /// 参考価格（円・税込）
+  price             Int
+  recommendedShopId String          @map("recommended_shop_id") @db.VarChar(30)
+  image             String          @db.VarChar(255)
+  searchKeyword     String          @map("search_keyword") @db.VarChar(100)
+  sortOrder         Int             @default(0) @map("sort_order")
+  isPublished       Boolean         @default(true) @map("is_published")
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)
+  category          Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  color             Color           @relation(fields: [colorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  recommendedShop   Shop            @relation(fields: [recommendedShopId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  /// おすすめのショップの購入リンク（DB ではコミット時に確認する外部キー）
+  recommendedLink   ProductLink     @relation("ProductRecommendedLink", fields: [id, recommendedShopId], references: [productId, shopId], onDelete: NoAction, onUpdate: NoAction, map: "fk_products_recommended_link")
+  links             ProductLink[]   @relation("ProductLinks")
+  trendProducts     TrendProduct[]
+  outfitProducts    OutfitProduct[]
+  favorites         Favorite[]
+  recentViews       RecentView[]
+
+  @@index([sortOrder], map: "idx_products_sort_order")
+  @@index([categoryId, price], map: "idx_products_category_id_price")
+  @@index([colorId], map: "idx_products_color_id")
+  @@index([price], map: "idx_products_price")
+  @@index([recommendedShopId], map: "idx_products_recommended_shop_id")
+  @@map("products")
+}
+
+model ProductLink {
+  productId      String    @map("product_id") @db.VarChar(30)
+  shopId         String    @map("shop_id") @db.VarChar(30)
+  /// 空のときは shops.search_url_template から URL を作る
+  customUrl      String?   @map("custom_url") @db.VarChar(1000)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  product        Product   @relation("ProductLinks", fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  shop           Shop      @relation(fields: [shopId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  recommendedFor Product[] @relation("ProductRecommendedLink")
+
+  @@id([productId, shopId])
+  @@index([shopId], map: "idx_product_links_shop_id")
+  @@map("product_links")
+}
+
+// ===== 3. トレンド =====
+
+model Trend {
+  id          String         @id @db.VarChar(30)
+  name        String         @db.VarChar(50)
+  subtitle    String         @db.VarChar(100)
+  image       String         @db.VarChar(255)
+  /// 注目度（0〜100）
+  hotScore    Int            @map("hot_score") @db.SmallInt
+  season      String         @db.VarChar(30)
+  /// カードに出すコーデ件数（表示用）
+  postCount   Int            @default(0) @map("post_count")
+  description String
+  sortOrder   Int            @default(0) @map("sort_order")
+  isPublished Boolean        @default(true) @map("is_published")
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  images      TrendImage[]
+  points      TrendPoint[]
+  tips        TrendTip[]
+  ages        TrendAge[]
+  tastes      TrendTaste[]
+  products    TrendProduct[]
+  favorites   Favorite[]
+  recentViews RecentView[]
+
+  @@index([sortOrder], map: "idx_trends_sort_order")
+  @@map("trends")
+}
+
+model TrendImage {
+  trendId   String @map("trend_id") @db.VarChar(30)
+  sortOrder Int    @map("sort_order") @db.SmallInt
+  image     String @db.VarChar(255)
+  trend     Trend  @relation(fields: [trendId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([trendId, sortOrder])
+  @@map("trend_images")
+}
+
+model TrendPoint {
+  trendId   String @map("trend_id") @db.VarChar(30)
+  sortOrder Int    @map("sort_order") @db.SmallInt
+  body      String @db.VarChar(200)
+  trend     Trend  @relation(fields: [trendId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([trendId, sortOrder])
+  @@map("trend_points")
+}
+
+model TrendTip {
+  trendId   String @map("trend_id") @db.VarChar(30)
+  sortOrder Int    @map("sort_order") @db.SmallInt
+  body      String @db.VarChar(200)
+  trend     Trend  @relation(fields: [trendId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([trendId, sortOrder])
+  @@map("trend_tips")
+}
+
+model TrendAge {
+  trendId String @map("trend_id") @db.VarChar(30)
+  ageId   String @map("age_id") @db.VarChar(30)
+  trend   Trend  @relation(fields: [trendId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  age     Age    @relation(fields: [ageId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([trendId, ageId])
+  @@index([ageId], map: "idx_trend_ages_age_id")
+  @@map("trend_ages")
+}
+
+model TrendTaste {
+  trendId String @map("trend_id") @db.VarChar(30)
+  tasteId String @map("taste_id") @db.VarChar(30)
+  trend   Trend  @relation(fields: [trendId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  taste   Taste  @relation(fields: [tasteId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([trendId, tasteId])
+  @@index([tasteId], map: "idx_trend_tastes_taste_id")
+  @@map("trend_tastes")
+}
+
+model TrendProduct {
+  trendId   String  @map("trend_id") @db.VarChar(30)
+  productId String  @map("product_id") @db.VarChar(30)
+  sortOrder Int     @default(0) @map("sort_order") @db.SmallInt
+  trend     Trend   @relation(fields: [trendId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([trendId, productId])
+  @@index([productId], map: "idx_trend_products_product_id")
+  @@map("trend_products")
+}
+
+// ===== 4. コーデ =====
+
+model Outfit {
+  id          String          @id @db.VarChar(30)
+  sceneId     String          @map("scene_id") @db.VarChar(30)
+  title       String          @db.VarChar(100)
+  image       String          @db.VarChar(255)
+  description String
+  sortOrder   Int             @default(0) @map("sort_order")
+  isPublished Boolean         @default(true) @map("is_published")
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)
+  scene       Scene           @relation(fields: [sceneId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  products    OutfitProduct[]
+  tips        OutfitTip[]
+  ages        OutfitAge[]
+  tastes      OutfitTaste[]
+  favorites   Favorite[]
+  recentViews RecentView[]
+
+  @@index([sceneId, sortOrder], map: "idx_outfits_scene_id_sort_order")
+  @@map("outfits")
+}
+
+model OutfitProduct {
+  outfitId  String  @map("outfit_id") @db.VarChar(30)
+  productId String  @map("product_id") @db.VarChar(30)
+  /// main＝写真の主役（サムネイルに出さない）、item＝サムネイルに出すアイテム
+  role      String  @db.VarChar(10)
+  /// main は 0、item は 1 から
+  sortOrder Int     @default(0) @map("sort_order") @db.SmallInt
+  outfit    Outfit  @relation(fields: [outfitId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([outfitId, productId])
+  @@index([productId], map: "idx_outfit_products_product_id")
+  // 写真の主役アイテム（main）は1コーデに1つまで
+  @@unique([outfitId], map: "uq_outfit_products_main", where: raw("((role)::text = 'main'::text)"))
+  @@map("outfit_products")
+}
+
+model OutfitTip {
+  outfitId  String @map("outfit_id") @db.VarChar(30)
+  sortOrder Int    @map("sort_order") @db.SmallInt
+  body      String @db.VarChar(200)
+  outfit    Outfit @relation(fields: [outfitId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([outfitId, sortOrder])
+  @@map("outfit_tips")
+}
+
+model OutfitAge {
+  outfitId String @map("outfit_id") @db.VarChar(30)
+  ageId    String @map("age_id") @db.VarChar(30)
+  outfit   Outfit @relation(fields: [outfitId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  age      Age    @relation(fields: [ageId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([outfitId, ageId])
+  @@index([ageId], map: "idx_outfit_ages_age_id")
+  @@map("outfit_ages")
+}
+
+model OutfitTaste {
+  outfitId String @map("outfit_id") @db.VarChar(30)
+  tasteId  String @map("taste_id") @db.VarChar(30)
+  outfit   Outfit @relation(fields: [outfitId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  taste    Taste  @relation(fields: [tasteId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([outfitId, tasteId])
+  @@index([tasteId], map: "idx_outfit_tastes_taste_id")
+  @@map("outfit_tastes")
+}
+
+// ===== 5. コラム・トップページ =====
+
+model Post {
+  id          String          @id @db.VarChar(30)
+  title       String          @db.VarChar(100)
+  tagId       String          @map("tag_id") @db.VarChar(30)
+  publishedOn DateTime        @map("published_on") @db.Date
+  image       String          @db.VarChar(255)
+  excerpt     String          @db.VarChar(200)
+  isPublished Boolean         @default(true) @map("is_published")
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)
+  tag         PostTag         @relation(fields: [tagId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  paragraphs  PostParagraph[]
+
+  @@index([tagId], map: "idx_posts_tag_id")
+  @@index([publishedOn(sort: Desc)], map: "idx_posts_published_on")
+  @@map("posts")
+}
+
+model PostParagraph {
+  postId    String @map("post_id") @db.VarChar(30)
+  sortOrder Int    @map("sort_order") @db.SmallInt
+  body      String
+  post      Post   @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([postId, sortOrder])
+  @@map("post_paragraphs")
+}
+
+model HeroSlide {
+  id            Int      @id @default(autoincrement())
+  image         String   @db.VarChar(255)
+  /// CSS の object-position に使う値
+  imagePosition String   @default("center 30%") @map("image_position") @db.VarChar(30)
+  /// 改行は \n で持つ
+  title         String   @db.VarChar(100)
+  body          String   @db.VarChar(200)
+  sortOrder     Int      @default(0) @map("sort_order")
+  isPublished   Boolean  @default(true) @map("is_published")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("hero_slides")
+}
+
+model CommunityImage {
+  id          Int      @id @default(autoincrement())
+  image       String   @db.VarChar(255)
+  sortOrder   Int      @default(0) @map("sort_order")
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("community_images")
+}
+
+// ===== 6. ユーザー（F-21 会員登録の実現時に使う） =====
+
+model User {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// 大文字・小文字を区別せずに一意（DB の uq_users_email）
+  email            String           @db.VarChar(254)
+  /// member＝一般会員、admin＝管理者
+  role             String           @default("member") @db.VarChar(10)
+  lastLoginAt      DateTime?        @map("last_login_at") @db.Timestamptz(6)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
+  favorites        Favorite[]
+  recentViews      RecentView[]
+  styleProfile     StyleProfile?
+  contactInquiries ContactInquiry[]
+  auditLogs        AuditLog[]
+
+  @@map("users")
+}
+
+/// trendId / outfitId / productId のうち、ちょうど1つだけに値を入れる
+model Favorite {
+  id        BigInt   @id @default(autoincrement())
+  userId    String   @map("user_id") @db.Uuid
+  trendId   String?  @map("trend_id") @db.VarChar(30)
+  outfitId  String?  @map("outfit_id") @db.VarChar(30)
+  productId String?  @map("product_id") @db.VarChar(30)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  trend     Trend?   @relation(fields: [trendId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  outfit    Outfit?  @relation(fields: [outfitId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, trendId], map: "uq_favorites_user_id_trend_id")
+  @@unique([userId, outfitId], map: "uq_favorites_user_id_outfit_id")
+  @@unique([userId, productId], map: "uq_favorites_user_id_product_id")
+  @@index([userId, createdAt], map: "idx_favorites_user_id_created_at")
+  @@index([trendId], map: "idx_favorites_trend_id")
+  @@index([outfitId], map: "idx_favorites_outfit_id")
+  @@index([productId], map: "idx_favorites_product_id")
+  @@map("favorites")
+}
+
+/// trendId / outfitId / productId のうち、ちょうど1つだけに値を入れる。1人最大8件
+model RecentView {
+  id        BigInt   @id @default(autoincrement())
+  userId    String   @map("user_id") @db.Uuid
+  trendId   String?  @map("trend_id") @db.VarChar(30)
+  outfitId  String?  @map("outfit_id") @db.VarChar(30)
+  productId String?  @map("product_id") @db.VarChar(30)
+  viewedAt  DateTime @default(now()) @map("viewed_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  trend     Trend?   @relation(fields: [trendId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  outfit    Outfit?  @relation(fields: [outfitId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, trendId], map: "uq_recent_views_user_id_trend_id")
+  @@unique([userId, outfitId], map: "uq_recent_views_user_id_outfit_id")
+  @@unique([userId, productId], map: "uq_recent_views_user_id_product_id")
+  @@index([userId, viewedAt(sort: Desc)], map: "idx_recent_views_user_id_viewed_at")
+  @@index([trendId], map: "idx_recent_views_trend_id")
+  @@index([outfitId], map: "idx_recent_views_outfit_id")
+  @@index([productId], map: "idx_recent_views_product_id")
+  @@map("recent_views")
+}
+
+model StyleProfile {
+  userId    String              @id @map("user_id") @db.Uuid
+  ageId     String              @map("age_id") @db.VarChar(30)
+  sceneId   String              @map("scene_id") @db.VarChar(30)
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  age       Age                 @relation(fields: [ageId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  scene     Scene               @relation(fields: [sceneId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  tastes    StyleProfileTaste[]
+
+  @@index([ageId], map: "idx_style_profiles_age_id")
+  @@index([sceneId], map: "idx_style_profiles_scene_id")
+  @@map("style_profiles")
+}
+
+model StyleProfileTaste {
+  userId       String       @map("user_id") @db.Uuid
+  /// 1＝1つ目に選んだテイスト（重視）、2＝2つ目
+  priority     Int          @db.SmallInt
+  tasteId      String       @map("taste_id") @db.VarChar(30)
+  styleProfile StyleProfile @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: NoAction)
+  taste        Taste        @relation(fields: [tasteId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([userId, priority])
+  @@unique([userId, tasteId], map: "uq_style_profile_tastes_user_id_taste_id")
+  @@index([tasteId], map: "idx_style_profile_tastes_taste_id")
+  @@map("style_profile_tastes")
+}
+
+// ===== 7. 受付（メールマガジン・お問い合わせ） =====
+
+model NewsletterSubscription {
+  id             BigInt    @id @default(autoincrement())
+  /// 大文字・小文字を区別せずに一意（DB の uq_newsletter_subscriptions_email）
+  email          String    @db.VarChar(254)
+  /// pending＝確認待ち、active＝配信中、unsubscribed＝配信停止
+  status         String    @default("pending") @db.VarChar(20)
+  confirmedAt    DateTime? @map("confirmed_at") @db.Timestamptz(6)
+  unsubscribedAt DateTime? @map("unsubscribed_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("newsletter_subscriptions")
+}
+
+model ContactInquiry {
+  id            BigInt      @id @default(autoincrement())
+  userId        String?     @map("user_id") @db.Uuid
+  name          String      @db.VarChar(50)
+  email         String      @db.VarChar(254)
+  inquiryTypeId String      @map("inquiry_type_id") @db.VarChar(30)
+  message       String
+  /// new＝未対応、in_progress＝対応中、closed＝対応済み
+  status        String      @default("new") @db.VarChar(20)
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime    @default(now()) @map("updated_at") @db.Timestamptz(6)
+  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  inquiryType   InquiryType @relation(fields: [inquiryTypeId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([status, createdAt(sort: Desc)], map: "idx_contact_inquiries_status_created_at")
+  @@index([userId], map: "idx_contact_inquiries_user_id")
+  @@index([inquiryTypeId], map: "idx_contact_inquiries_inquiry_type_id")
+  @@map("contact_inquiries")
+}
+
+// ===== 8. 運用（変更履歴） =====
+
+/// マスタ・コンテンツの変更をトリガーで自動的に記録する（アプリからは参照のみ）
+model AuditLog {
+  id        BigInt   @id @default(autoincrement())
+  userId    String?  @map("user_id") @db.Uuid
+  tableName String   @map("table_name") @db.VarChar(63)
+  /// insert / update / delete
+  action    String   @db.VarChar(10)
+  oldData   Json?    @map("old_data")
+  newData   Json?    @map("new_data")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([tableName, createdAt(sort: Desc)], map: "idx_audit_logs_table_name_created_at")
+  @@index([userId], map: "idx_audit_logs_user_id")
+  @@map("audit_logs")
+}

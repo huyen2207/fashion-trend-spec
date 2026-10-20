@@ -1,11 +1,12 @@
 // A-13 診断のおすすめ（ログインしていなくても使える。結果は保存しない）
+import { loadCatalog } from "@/lib/api/catalog";
 import { api, json, route, Validator } from "@/lib/api/http";
-import { isAge, isScene, isTaste } from "@/lib/api/query";
+import { masterChecks } from "@/lib/api/query";
 import { recommend } from "@/lib/api/recommend";
 
 export const { GET, POST, PUT, PATCH, DELETE } = route({
   GET: api(
-    ({ req }) => {
+    async ({ req }) => {
       const sp = req.nextUrl.searchParams;
       const age = sp.get("age");
       const scene = sp.get("scene");
@@ -17,13 +18,15 @@ export const { GET, POST, PUT, PATCH, DELETE } = route({
         if (!scene) v.add("scene", "よく着るシーンを選んでください。");
         v.check("3つの質問すべてに答えてください");
       }
+      const c = await loadCatalog();
+      const { isAge, isScene, isTaste } = masterChecks(c);
       if (tastes.length > 2) v.add("tastes", "テイストは2つまで選べます");
       if (new Set(tastes).size !== tastes.length) v.add("tastes", "同じテイストが2回指定されています。");
       if (!isAge(age!)) v.add("age", `年代「${age}」は存在しません。`);
       if (!isScene(scene!)) v.add("scene", `シーン「${scene}」は存在しません。`);
       tastes.forEach((t, i) => !isTaste(t) && v.add(`tastes[${i}]`, `テイスト「${t}」は存在しません。`));
       v.check();
-      return json(recommend({ ageId: age!, tasteIds: tastes, sceneId: scene! }));
+      return json(recommend(c, { ageId: age!, tasteIds: tastes, sceneId: scene! }));
     },
     { cache: "public" }
   ),

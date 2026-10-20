@@ -1,8 +1,12 @@
 // B-01 メールマガジンに登録する（確認メールを送る）
 import { api, json, RATE_LIMITS, readJson, route, Validator } from "@/lib/api/http";
 import { sendDummyMail } from "@/lib/api/mail";
-import { db, nextId, nowIso } from "@/lib/api/store";
 import { createToken } from "@/lib/api/tokens";
+import { prisma } from "@/lib/db";
+import { Prisma } from "@/lib/generated/prisma/client";
+
+// 大文字・小文字を区別せずに探す（DB の一意インデックスも lower(email)）
+const findByEmail = (email: string) => prisma.newsletterSubscription.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
 
 export const { GET, POST, PUT, PATCH, DELETE } = route({
   POST: api(
@@ -12,18 +16,22 @@ export const { GET, POST, PUT, PATCH, DELETE } = route({
       const email = v.email(body.email, "email");
       v.check();
 
-      let sub = db.newsletterSubscriptions.find((s) => s.email.toLowerCase() === email.toLowerCase());
+      let sub = await findByEmail(email);
       if (!sub) {
-        const now = nowIso();
-        sub = { id: nextId("newsletterSubscriptions"), email, status: "pending", confirmedAt: null, unsubscribedAt: null, createdAt: now, updatedAt: now };
-        db.newsletterSubscriptions.push(sub);
+        try {
+          sub = await prisma.newsletterSubscription.create({ data: { email } });
+        } catch (e) {
+          // 同時に同じアドレスで登録されたときは、先に登録されたほうを使う
+          if (!(e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")) throw e;
+          sub = (await findByEmail(email))!;
+        }
       }
       // 配信中の人には何も送らない。確認待ち・配信停止中の人には確認メールを送る（送り直す）
       if (sub.status !== "active") {
-        const origin = req.nextUrl.origin;
+        const id = Number(sub.id);
         sendDummyMail("【StyleHer】メールマガジン登録の確認", [
           "下のリンクを開くと登録が完了します（7日間有効）。",
-          `${origin}/newsletter?subscription=${sub.id}&token=${createToken(sub.id, "active")}`,
+          `${req.nextUrl.origin}/newsletter?subscription=${id}&token=${createToken(id, "active")}`,
         ]);
       }
       // 登録済みかどうかが分からないよう、いつも同じ応答（6.1）。登録の id も返さない

@@ -1,8 +1,9 @@
 // ===== APIの共通処理（docs/api.md 3章） =====
 import { createHash, randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { authenticate } from "./auth";
-import type { UserRow } from "./store";
+import type { UserRow } from "./catalog";
 
 // ---- エラー（3.6） ----
 export type FieldError = { field: string; message: string };
@@ -108,7 +109,7 @@ export function api(fn: (c: Ctx) => Promise<Response> | Response, options: Optio
     const started = Date.now();
     let res: Response;
     try {
-      const user = auth === "none" ? null : authenticate(req, auth);
+      const user = auth === "none" ? null : await authenticate(req, auth);
       const rule = options.rateLimit ?? (auth === "member" || auth === "admin" ? RATE_LIMITS.member : RATE_LIMITS.public);
       const rateHeaders = hitRateLimit(rule, rule.by === "user" && user ? user.id : clientIp(req));
       // [...path] のような配列のパラメーターは "/" でつなぐ
@@ -139,6 +140,13 @@ function errorResponse(e: unknown, requestId: string): Response {
       { ...headers, "Cache-Control": "no-store" }
     );
   }
+  // 一意制約の違反（同時に同じIDで登録したときなど）は 409
+  if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")
+    return json(
+      { error: { code: "CONFLICT", message: "同じ内容がすでに登録されています。", requestId } },
+      409,
+      { "Cache-Control": "no-store" }
+    );
   // 詳しい内容は返さず、ログにだけ残す
   console.error(`[api] ${requestId} 予期しないエラー`, e);
   return json(
@@ -201,6 +209,8 @@ export const paginate = <T>(all: T[], { limit, offset }: { limit: number; offset
   limit,
   offset,
 });
+// DB で LIMIT / OFFSET を付けて取り出したときの形（items は取り出した分、total は全件数）
+export const paged = <T>(items: T[], total: number, { limit, offset }: { limit: number; offset: number }) => ({ items, total, limit, offset });
 
 // ---- 管理APIの同時編集の確認（3.9） ----
 export const etagOf = (key: string, updatedAt: string) =>

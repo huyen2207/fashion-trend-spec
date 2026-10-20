@@ -1,15 +1,18 @@
 // 公開APIのクエリパラメーターで使う、マスタのIDの確認
+import type { MasterRow, Masters } from "./catalog";
 import type { Validator } from "./http";
-import { db, type MasterRow } from "./store";
 
-const exists = (list: MasterRow[]) => (id: string) => list.some((x) => x.id === id && x.isPublished);
-export const isAge = exists(db.ages);
-export const isTaste = exists(db.tastes);
-export const isScene = exists(db.scenes);
-export const isCategory = exists(db.categories);
-export const isColor = exists(db.colors);
-export const isPostTag = exists(db.postTags);
-export const isInquiryType = exists(db.inquiryTypes);
+// 公開中のマスタにあるIDか
+export const exists = (list: MasterRow[]) => (id: string) => list.some((x) => x.id === id && x.isPublished);
+export const masterChecks = (m: Masters) => ({
+  isAge: exists(m.ages),
+  isTaste: exists(m.tastes),
+  isScene: exists(m.scenes),
+  isCategory: exists(m.categories),
+  isColor: exists(m.colors),
+  isPostTag: exists(m.postTags),
+  isInquiryType: exists(m.inquiryTypes),
+});
 
 // 指定されていれば、存在するIDかを確認する
 export function optionalRef(v: Validator, raw: string | null, field: string, label: string, ok: (id: string) => boolean) {

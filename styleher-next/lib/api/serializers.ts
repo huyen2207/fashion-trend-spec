@@ -1,16 +1,20 @@
 // ===== レスポンスの形を作る（docs/api.md 5.0） =====
 // 公開APIは公開中のデータだけを使い、内部の値（検索キーワード・並び順・公開フラグなど）は返さない。
-import { db, type ItemType, type OutfitRow, type PostRow, type ProductRow, type TrendRow } from "./store";
+// どの関数も、DB から読み込んだデータ（lib/api/catalog.ts の Catalog）を受け取る。
+import type { Catalog, ItemType, OutfitRow, PostRow, ProductRow, TrendRow } from "./catalog";
 
 export const findPublished = {
-  trend: (id: string) => db.trends.find((t) => t.id === id && t.isPublished),
-  outfit: (id: string) => db.outfits.find((o) => o.id === id && o.isPublished),
-  product: (id: string) => db.products.find((p) => p.id === id && p.isPublished),
-  post: (id: string) => db.posts.find((p) => p.id === id && p.isPublished),
+  trend: (c: Catalog, id: string) => c.trends.find((t) => t.id === id && t.isPublished),
+  outfit: (c: Catalog, id: string) => c.outfits.find((o) => o.id === id && o.isPublished),
+  product: (c: Catalog, id: string) => c.products.find((p) => p.id === id && p.isPublished),
+  post: (c: Catalog, id: string) => c.posts.find((p) => p.id === id && p.isPublished),
 };
-export const publishedTrends = () => db.trends.filter((t) => t.isPublished).sort(bySortOrder);
-export const publishedOutfits = () => db.outfits.filter((o) => o.isPublished).sort(bySortOrder);
-export const publishedProducts = () => db.products.filter((p) => p.isPublished).sort(bySortOrder);
+export const publishedTrends = (c: Catalog) => c.trends.filter((t) => t.isPublished).sort(bySortOrder);
+export const publishedOutfits = (c: Catalog) => c.outfits.filter((o) => o.isPublished).sort(bySortOrder);
+export const publishedProducts = (c: Catalog) => c.products.filter((p) => p.isPublished).sort(bySortOrder);
+// 公開日の新しい順。同じ日はIDの順
+export const publishedPosts = (c: Catalog) =>
+  c.posts.filter((p) => p.isPublished).sort((a, b) => b.publishedOn.localeCompare(a.publishedOn) || a.id.localeCompare(b.id));
 
 // 並び順は一意に決める（同じ値ならIDの順。3.3）
 export function bySortOrder(a: { sortOrder: number; id: string | number }, b: { sortOrder: number; id: string | number }) {
@@ -19,11 +23,11 @@ export function bySortOrder(a: { sortOrder: number; id: string | number }, b: { 
 
 // コーデのアイテム：写真の主役（main）＋サムネイル（item）
 export const outfitProductIds = (o: OutfitRow) => (o.mainProductId ? [o.mainProductId, ...o.itemProductIds] : o.itemProductIds);
-const productById = (id: string) => db.products.find((p) => p.id === id);
+const productById = (c: Catalog, id: string) => c.products.find((p) => p.id === id);
 
 // 購入リンク：custom_url があればそれ、なければショップの検索URLの型に検索キーワードを入れる（docs/db.md 7.3）
-export function purchaseLinks(p: ProductRow) {
-  const shopOf = (id: string) => db.shops.find((s) => s.id === id);
+export function purchaseLinks(c: Catalog, p: ProductRow) {
+  const shopOf = (id: string) => c.shops.find((s) => s.id === id);
   return [...p.links]
     .sort((a, b) => {
       if (a.shopId === p.recommendedShopId) return -1;
@@ -38,7 +42,8 @@ export function purchaseLinks(p: ProductRow) {
 }
 
 // 着回し数：そのアイテムを使った公開中のコーデ
-export const outfitsWith = (productId: string) => publishedOutfits().filter((o) => outfitProductIds(o).includes(productId));
+export const outfitsWith = (c: Catalog, productId: string) =>
+  publishedOutfits(c).filter((o) => outfitProductIds(o).includes(productId));
 
 export function trendSummary(t: TrendRow) {
   return {
@@ -54,7 +59,7 @@ export function trendSummary(t: TrendRow) {
   };
 }
 
-export function productSummary(p: ProductRow) {
+export function productSummary(c: Catalog, p: ProductRow) {
   return {
     id: p.id,
     name: p.name,
@@ -63,13 +68,13 @@ export function productSummary(p: ProductRow) {
     price: p.price,
     image: p.image,
     recommendedShopId: p.recommendedShopId,
-    purchaseUrl: purchaseLinks(p)[0]?.url ?? "",
-    wearCount: outfitsWith(p.id).length,
+    purchaseUrl: purchaseLinks(c, p)[0]?.url ?? "",
+    wearCount: outfitsWith(c, p.id).length,
   };
 }
 
-export function outfitSummary(o: OutfitRow) {
-  const items = o.itemProductIds.map(productById).filter((p): p is ProductRow => !!p);
+export function outfitSummary(c: Catalog, o: OutfitRow) {
+  const items = o.itemProductIds.map((id) => productById(c, id)).filter((p): p is ProductRow => !!p);
   return {
     id: o.id,
     sceneId: o.sceneId,
@@ -79,66 +84,68 @@ export function outfitSummary(o: OutfitRow) {
     tasteIds: o.tasteIds,
     mainProductId: o.mainProductId,
     items: items.map((p) => ({ id: p.id, name: p.name, image: p.image, price: p.price })),
-    totalPrice: outfitProductIds(o).reduce((sum, id) => sum + (productById(id)?.price ?? 0), 0),
+    totalPrice: outfitProductIds(o).reduce((sum, id) => sum + (productById(c, id)?.price ?? 0), 0),
   };
 }
 
-export function trendDetail(t: TrendRow) {
+export function trendDetail(c: Catalog, t: TrendRow) {
   return {
     ...trendSummary(t),
     description: t.description,
     images: t.images,
     points: t.points,
     tips: t.tips,
-    products: t.productIds.map((id) => findPublished.product(id)).filter((p): p is ProductRow => !!p).map(productSummary),
+    products: t.productIds
+      .map((id) => findPublished.product(c, id))
+      .filter((p): p is ProductRow => !!p)
+      .map((p) => productSummary(c, p)),
     // おすすめコーデ：このトレンドのテイストを1つでも含むコーデを最大3件（今の画面と同じ決め方）
-    relatedOutfits: publishedOutfits()
+    relatedOutfits: publishedOutfits(c)
       .filter((o) => o.tasteIds.some((x) => t.tasteIds.includes(x)))
       .slice(0, 3)
-      .map(outfitSummary),
+      .map((o) => outfitSummary(c, o)),
   };
 }
 
-export function outfitDetail(o: OutfitRow) {
+export function outfitDetail(c: Catalog, o: OutfitRow) {
   return {
-    ...outfitSummary(o),
+    ...outfitSummary(c, o),
     description: o.description,
     tips: o.tips,
     products: outfitProductIds(o)
-      .map((id) => findPublished.product(id))
+      .map((id) => findPublished.product(c, id))
       .filter((p): p is ProductRow => !!p)
-      .map((p) => ({ role: p.id === o.mainProductId ? "main" : "item", ...productSummary(p) })),
+      .map((p) => ({ role: p.id === o.mainProductId ? "main" : "item", ...productSummary(c, p) })),
   };
 }
 
-export function productDetail(p: ProductRow) {
+export function productDetail(c: Catalog, p: ProductRow) {
   return {
-    ...productSummary(p),
-    links: purchaseLinks(p),
-    trends: publishedTrends()
+    ...productSummary(c, p),
+    links: purchaseLinks(c, p),
+    trends: publishedTrends(c)
       .filter((t) => t.productIds.includes(p.id))
       .map((t) => ({ id: t.id, name: t.name, image: t.image })),
-    outfits: outfitsWith(p.id).map(outfitSummary),
+    outfits: outfitsWith(c, p.id).map((o) => outfitSummary(c, o)),
   };
 }
 
 export function postSummary(p: PostRow) {
   return { id: p.id, title: p.title, tagId: p.tagId, publishedOn: p.publishedOn, image: p.image, excerpt: p.excerpt };
 }
-export const postDetail = (p: PostRow) => ({ ...postSummary(p), paragraphs: p.paragraphs });
 
 // お気に入り・最近見たもの：種類に合わせた概要（非公開なら null）
-export function itemSummary(type: ItemType, id: string) {
+export function itemSummary(c: Catalog, type: ItemType, id: string) {
   if (type === "trend") {
-    const t = findPublished.trend(id);
+    const t = findPublished.trend(c, id);
     return t ? trendSummary(t) : null;
   }
   if (type === "outfit") {
-    const o = findPublished.outfit(id);
-    return o ? outfitSummary(o) : null;
+    const o = findPublished.outfit(c, id);
+    return o ? outfitSummary(c, o) : null;
   }
-  const p = findPublished.product(id);
-  return p ? productSummary(p) : null;
+  const p = findPublished.product(c, id);
+  return p ? productSummary(c, p) : null;
 }
 
 // 検索用の正規化は画面と同じものを使う（全角/半角・大文字/小文字・カタカナ/ひらがなをそろえる）
