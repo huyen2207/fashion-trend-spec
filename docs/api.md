@@ -2,7 +2,7 @@
 
 **プロジェクト名（仮）：** ファッショントレンド・コーディネート支援Webアプリ「StyleHer（スタイルハー）」
 **作成日：** 2026年9月29日
-**版数：** v0.4（画面からの利用に合わせて、キャッシュと検索を見直し）
+**版数：** v0.5（next-auth によるログインと、APIの認可を追加）
 **関連文書：** [プロジェクト仕様書・要件定義 v0.2](../プロジェクト仕様書_要件定義.md) / [設計書](../設計書.md) / [DB設計書 v0.2](db.md) / [ER図](er.md)
 
 ---
@@ -35,18 +35,18 @@ MVPの StyleHer は **サーバーとAPIを持たない**。画面は `data.js`�
 | 形式 | REST（リソースをURLで表し、HTTPメソッドで操作する）。データはJSON |
 | 実装 | Next.js の Route Handlers（`app/api/v1/.../route.ts`）で作ることを想定する。今の Next.js 版は静的サイトとして書き出している（`next.config.ts` の `output: "export"`）ため、APIを動かすにはこの設定を外し、サーバーで動く環境（Vercel など）に置く必要がある（10章） |
 | データベース | PostgreSQL（[DB設計書](db.md)） |
-| 認証 | 認証サービス（例：Supabase Auth）が発行するアクセストークン（JWT）を使う。ログイン・パスワードの処理は認証サービスが行い、本APIには含めない |
+| 認証 | next-auth（Auth.js）で、メールアドレスとパスワードでログインする。ログインの状態は、next-auth が発行するセッションの Cookie（署名・暗号化した JWT）で持つ（3.4） |
 
 ### 2.2 全体構成図
 
 ```mermaid
 flowchart LR
   B[利用者のブラウザ<br>StyleHer の画面] -->|公開API・受付API| API[StyleHer API<br>/api/v1]
-  B -->|ログイン| AUTH[認証サービス]
-  AUTH -->|アクセストークン| B
-  B -->|会員API<br>アクセストークン付き| API
-  ADM[運営者のブラウザ<br>管理画面] -->|管理API<br>アクセストークン付き| API
-  API -->|トークンの確認| AUTH
+  B -->|ログイン<br>メールアドレス・パスワード| AUTH[next-auth<br>/api/auth]
+  AUTH -->|セッションの Cookie| B
+  AUTH -->|パスワードの確認| DB
+  B -->|会員API<br>Cookie 付き| API
+  ADM[運営者のブラウザ<br>管理画面] -->|管理API<br>Cookie 付き| API
   API <--> DB[(PostgreSQL)]
   API -->|確認メール| MAIL[メール配信サービス]
   B <-->|ログインしていないとき| L[(localStorage)]
@@ -149,13 +149,15 @@ https://{ドメイン}/api/v1/{リソース}
 | 種類 | 付けるもの | 対象 |
 |---|---|---|
 | なし | — | 公開API・受付API |
-| 会員 | `Authorization: Bearer {アクセストークン}` | 会員API（`/me/...`） |
+| 会員 | ログインのセッションの Cookie（next-auth） | 会員API（`/me/...`） |
 | 管理者 | 同上。さらにDBの `users.role` が `admin` であること | 管理API（`/admin/...`） |
 
-- アクセストークンは認証サービスが発行する。APIは、トークンの署名・有効期限を確認し、トークンの中のユーザーIDで `users` を探す。
+- ログインは next-auth（Auth.js）で、メールアドレスとパスワードで行う（`/login`、`POST /api/auth/callback/credentials`）。パスワードは bcrypt のハッシュにして `users.password_hash` に保存する。
+- セッションは、next-auth が署名・暗号化した JWT を Cookie（`authjs.session-token`、HttpOnly・SameSite=Lax）に入れて持つ。APIは、Cookie の署名・有効期限を確認し、中のユーザーIDで `users` を探す。
+- ログインの試行は、同じIPから10分に10回まで。登録がない・パスワードが違うときは、どちらも同じエラーにする（メールアドレスの登録の有無が分からないように）。
 - 管理者かどうかは、トークンの中身ではなく **DBの `users.role` で毎回確認する**（権限を外したらすぐに使えなくするため）。
 - `401` のときは `WWW-Authenticate: Bearer` ヘッダーを付ける。
-- 受付API（`POST /contact-inquiries`）は、トークンが付いていれば本人の記録に使い、なくても受け付ける。付いているトークンが無効なときは `401` にする（黙って未ログイン扱いにしない）。
+- 受付API（`POST /contact-inquiries`）は、ログインしていれば本人の記録に使い、していなくても受け付ける。Cookie が無効・期限切れのときは、未ログインとして扱う。
 
 ### 3.5 ステータスコード
 
@@ -1094,7 +1096,7 @@ POST /contact-inquiries
 
 ## 7. 会員APIの詳細
 
-すべて `Authorization: Bearer {アクセストークン}` が必要。ないとき・無効なときは `401 UNAUTHENTICATED`。
+すべてログイン（セッションの Cookie）が必要。ないとき・無効なときは `401 UNAUTHENTICATED`（3.4）。
 
 ### 7.1 C-01 自分の会員情報 / C-02 退会する
 
@@ -1114,9 +1116,9 @@ DELETE /me
 }
 ```
 
-- **GET はデータを変えない。** `users` の行は、認証サービスで会員登録したときに、認証サービスの登録時の仕組み（Supabase なら `auth.users` への登録をきっかけに動くDBのトリガー）で作る。`last_login_at` も、認証サービスのログイン時の仕組みで更新する。
+- **GET はデータを変えない。** `last_login_at` は、ログインしたとき（next-auth の確認が通ったとき）に更新する。会員登録（`users` の行を作る）は今後の対応で、今は開発用の会員（初期データ）だけがいる。
 - `users` に行がないとき（登録の処理が失敗したときなど）は `404 NOT_FOUND`。画面はログアウトして、もう一度ログインしてもらう。
-- DELETE は、`users` の行と認証サービスのアカウントを削除し、`204` を返す。お気に入り・最近見たもの・診断結果も一緒に消える（[DB設計書](db.md) 5章）。お問い合わせの記録は残る（本人とのつながりだけ外れる）。
+- DELETE は、`users` の行（ログイン用のパスワードのハッシュを含む）を削除し、`204` を返す。お気に入り・最近見たもの・診断結果も一緒に消える（[DB設計書](db.md) 5章）。お問い合わせの記録は残る（本人とのつながりだけ外れる）。
 
 使うテーブル：`users`
 
@@ -1522,12 +1524,11 @@ GET /admin/audit-logs?table=products&userId=…&from=2026-09-01&to=2026-09-30&li
 ```mermaid
 sequenceDiagram
   participant B as ブラウザ
-  participant A as 認証サービス
+  participant A as next-auth（/api/auth）
   participant API as StyleHer API
   participant L as localStorage
-  B->>A: ログイン
-  A-->>B: アクセストークン
-  Note over A: 会員登録したときは、認証サービスの仕組みで users に行を作る
+  B->>A: ログイン（メールアドレス・パスワード）
+  A-->>B: セッションの Cookie
   B->>API: GET /me
   API-->>B: 会員情報
   B->>L: お気に入り・最近見たもの・診断結果を読む
@@ -1651,6 +1652,7 @@ v0.1 を次の5つの観点で見直した。
 
 | 版数 | 日付 | 内容 |
 |---|---|---|
+| v0.5 | 2026年10月20日 | next-auth（メールアドレスとパスワード）でのログインを実装し、会員API・管理APIの認証をアクセストークンからセッションの Cookie に変更した（2.1・2.2・3.4・7章・9.2）。`users` に `password_hash` を追加 |
 | v0.1 | 2026年9月29日 | 初版作成（DB設計書 v0.2 と、現在の画面の実装にもとづく） |
 | v0.4 | 2026年10月6日 | 画面からAPIを使うようにしたのに合わせて、ブラウザ向けのキャッシュから `stale-while-revalidate` を外し（CDN向けの `CDN-Cache-Control` に移動）、検索（A-14）を画面から使うことにした |
 | v0.3 | 2026年10月6日 | Next.js でダミーデータ版を実装したのに合わせて、管理APIの1件の取得（D-01・D-02）の形を「登録・更新で送る形と同じ」と明確にした |

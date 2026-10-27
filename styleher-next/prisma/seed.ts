@@ -1,6 +1,6 @@
 // 初期データの登録（npm run db:seed）。
 // lib/data.ts のデータを docs/db.md 8.1 の対応表にしたがって変換し、DB に入れる。
-// ダミーの会員（lib/api/auth.ts の固定トークンで使う2人）も登録する。
+// 開発用の会員（一般会員・管理者の2人。/login でログインできる）も登録する。
 //
 //   npm run db:seed              … DB が空のときだけ登録する
 //   npm run db:seed -- --reset   … すべてのテーブルを空にしてから登録し直す（お気に入りなども消える）
@@ -8,6 +8,13 @@ import "dotenv/config";
 import { DUMMY_ADMIN_ID, DUMMY_MEMBER_ID } from "../lib/api/catalog";
 import * as data from "../lib/data";
 import { prisma } from "../lib/db";
+import { hashPassword } from "../lib/auth/password";
+
+// 開発用の会員のログイン情報（README の「ログイン」）
+const DEV_USERS = {
+  member: { email: "hanako@example.com", password: "hanako-pass-1234" },
+  admin: { email: "admin@example.com", password: "admin-pass-1234" },
+};
 
 // 現在の data.ts は色名・ショップ名・タグ名を直接持っているので、IDに置き換える（docs/db.md 付録B と同じ）
 const COLOR_IDS: Record<string, string> = {
@@ -154,11 +161,11 @@ async function main() {
       });
       await tx.communityImage.createMany({ data: data.community.map((image, i) => ({ image, sortOrder: i + 1 })) });
 
-      // ダミーの会員
+      // 開発用の会員（/login でログインできる。本番では使わない）
       await tx.user.createMany({
         data: [
-          { id: DUMMY_MEMBER_ID, email: "hanako@example.com", role: "member" },
-          { id: DUMMY_ADMIN_ID, email: "admin@example.com", role: "admin" },
+          { id: DUMMY_MEMBER_ID, email: DEV_USERS.member.email, role: "member", passwordHash: await hashPassword(DEV_USERS.member.password) },
+          { id: DUMMY_ADMIN_ID, email: DEV_USERS.admin.email, role: "admin", passwordHash: await hashPassword(DEV_USERS.admin.password) },
         ],
         skipDuplicates: true,
       });

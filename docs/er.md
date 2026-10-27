@@ -414,6 +414,7 @@ erDiagram
     uuid id PK "ユーザーID"
     varchar email UK "メールアドレス"
     varchar role "member または admin"
+    varchar password_hash "パスワードのハッシュ"
     timestamptz last_login_at "最終ログイン日時"
     timestamptz created_at "作成日時"
     timestamptz updated_at "更新日時"

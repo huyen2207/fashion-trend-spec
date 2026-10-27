@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { authenticate } from "./auth";
+import { clientIp, countHit } from "./rateLimit";
 import type { UserRow } from "./catalog";
 
 // ---- エラー（3.6） ----
@@ -58,28 +59,15 @@ export const RATE_LIMITS = {
   newsletter: { name: "newsletter", limit: 5, windowSec: 600, by: "ip" },
 } satisfies Record<string, RateLimit>;
 
-const g = globalThis as unknown as { __styleherRate?: Map<string, { count: number; resetAt: number }> };
-const counters = (g.__styleherRate ??= new Map());
-
 function hitRateLimit(rule: RateLimit, key: string): Record<string, string> {
-  const now = Date.now();
-  const id = `${rule.name}:${key}`;
-  let c = counters.get(id);
-  if (!c || c.resetAt <= now) {
-    c = { count: 0, resetAt: now + rule.windowSec * 1000 };
-    counters.set(id, c);
-  }
-  c.count++;
-  const reset = Math.ceil((c.resetAt - now) / 1000);
-  if (c.count > rule.limit) throw errors.tooManyRequests(reset);
+  const { ok, remaining, reset } = countHit(`${rule.name}:${key}`, rule.limit, rule.windowSec);
+  if (!ok) throw errors.tooManyRequests(reset);
   return {
     "RateLimit-Limit": String(rule.limit),
-    "RateLimit-Remaining": String(rule.limit - c.count),
+    "RateLimit-Remaining": String(remaining),
     "RateLimit-Reset": String(reset),
   };
 }
-
-const clientIp = (req: NextRequest) => req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
 
 // ---- 共通の入口：リクエストID・認証・回数制限・キャッシュ・エラー処理をまとめる ----
 export type Ctx = {
@@ -109,7 +97,7 @@ export function api(fn: (c: Ctx) => Promise<Response> | Response, options: Optio
     const started = Date.now();
     let res: Response;
     try {
-      const user = auth === "none" ? null : await authenticate(req, auth);
+      const user = auth === "none" ? null : await authenticate(auth);
       const rule = options.rateLimit ?? (auth === "member" || auth === "admin" ? RATE_LIMITS.member : RATE_LIMITS.public);
       const rateHeaders = hitRateLimit(rule, rule.by === "user" && user ? user.id : clientIp(req));
       // [...path] のような配列のパラメーターは "/" でつなぐ

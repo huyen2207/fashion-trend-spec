@@ -413,6 +413,8 @@ model User {
   email            String           @db.VarChar(254)
   /// member＝一般会員、admin＝管理者
   role             String           @default("member") @db.VarChar(10)
+  /// ログイン用のパスワードのハッシュ（bcrypt）。空のときはログインできない
+  passwordHash     String?          @map("password_hash") @db.VarChar(100)
   lastLoginAt      DateTime?        @map("last_login_at") @db.Timestamptz(6)
   createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)

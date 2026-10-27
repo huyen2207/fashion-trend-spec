@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { SessionProvider } from "next-auth/react";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { MotionProvider } from "@/components/motion";
@@ -30,16 +31,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        {/* ヘッダー・フッター・詳細ダイアログ・お気に入りは全ページ共通 */}
-        <MotionProvider>
-          <StoreProvider>
-            <Header />
-            {children}
-            <Footer />
-            <Overlays />
-            <Toaster position="bottom-center" />
-          </StoreProvider>
-        </MotionProvider>
+        {/* ヘッダー・フッター・詳細ダイアログ・お気に入りは全ページ共通。ログインの状態は SessionProvider で画面に渡す */}
+        <SessionProvider>
+          <MotionProvider>
+            <StoreProvider>
+              <Header />
+              {children}
+              <Footer />
+              <Overlays />
+              <Toaster position="bottom-center" />
+            </StoreProvider>
+          </MotionProvider>
+        </SessionProvider>
       </body>
     </html>
   );

@@ -120,8 +120,7 @@ export type Catalog = Masters & {
   communityImages: CommunityImageRow[];
 };
 
-// ダミーの会員。認証サービスの代わりに、固定のトークンで本人を決める（lib/api/auth.ts）。
-// DB の users には prisma/seed.ts で登録する
+// 開発用の会員（一般会員・管理者）。DB の users に prisma/seed.ts で、ログイン用のパスワードと一緒に登録する
 export const DUMMY_MEMBER_ID = "00000000-0000-4000-8000-000000000001";
 export const DUMMY_ADMIN_ID = "00000000-0000-4000-8000-000000000002";
 

@@ -371,13 +371,14 @@ MVPの StyleHer は **データベースを持たない**。表示するデー�
 
 | 列名 | 論理名 | 型 | 必須 | 初期値 | キー | 説明 |
 |---|---|---|---|---|---|---|
-| `id` | ユーザーID | uuid | ○ | `gen_random_uuid()` | PK | 認証サービスが発行するユーザーIDと同じ値を使う |
+| `id` | ユーザーID | uuid | ○ | `gen_random_uuid()` | PK | next-auth のセッション（JWT の `sub`）に入れる |
 | `email` | メールアドレス | varchar(254) | ○ | | UK | 大文字・小文字を区別せずに重複を防ぐ（`lower(email)` の一意インデックス） |
 | `role` | 権限 | varchar(10) | ○ | `'member'` | | `member`＝一般会員、`admin`＝管理者（F-22 管理画面を使える） |
+| `password_hash` | パスワードのハッシュ | varchar(100) | — | | | bcrypt のハッシュ。空のときはログインできない |
 | `last_login_at` | 最終ログイン日時 | timestamptz | — | | | |
 | `created_at` / `updated_at` | | | | | | 共通列 |
 
-パスワードは認証サービスが管理し、このテーブルには持たない。
+パスワードそのものは持たず、bcrypt のハッシュだけを持つ（next-auth でメールアドレスとパスワードでログインする。[API設計書](api.md) 3.4）。
 
 #### `favorites`（お気に入り）
 

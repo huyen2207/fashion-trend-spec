@@ -1,9 +1,10 @@
 "use client";
 
-import { Heart, Menu, Search } from "lucide-react";
+import { Heart, LogIn, LogOut, Menu, Search } from "lucide-react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,9 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 8));
   const favCount = favs.trend.length + favs.outfit.length + favs.product.length;
+  // ログインの状態（読み込み中は何も出さない）
+  const { data: session, status } = useSession();
+  const loginHref = pathname === "/login" ? "/login" : `/login?callbackUrl=${encodeURIComponent(pathname)}`;
 
   // トップページでは、表示中のセクションに合わせてメニューを強調
   useEffect(() => {
@@ -116,6 +120,17 @@ export function Header() {
             </SheetHeader>
             <nav className="flex flex-col px-4" aria-label="メインメニュー">
               {NAV.map((item) => navLink(item, "border-b py-3 text-base"))}
+              {status === "authenticated" ? (
+                <button type="button" onClick={() => signOut({ redirectTo: "/" })} className="py-3 text-left text-base text-muted-foreground hover:text-foreground">
+                  ログアウト
+                </button>
+              ) : (
+                status === "unauthenticated" && (
+                  <Link href={loginHref} onClick={() => setMenuOpen(false)} className="py-3 text-base text-muted-foreground hover:text-foreground">
+                    ログイン
+                  </Link>
+                )
+              )}
             </nav>
           </SheetContent>
         </Sheet>
@@ -170,6 +185,25 @@ export function Header() {
               )}
             </AnimatePresence>
           </Button>
+          {status === "authenticated" ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`ログアウト（${session.user.email ?? ""}）`}
+              title={`${session.user.email ?? ""} でログイン中`}
+              onClick={() => signOut({ redirectTo: "/" })}
+            >
+              <LogOut className="size-5" />
+            </Button>
+          ) : (
+            status === "unauthenticated" && (
+              <Button asChild variant="ghost" size="icon" aria-label="ログイン">
+                <Link href={loginHref}>
+                  <LogIn className="size-5" />
+                </Link>
+              </Button>
+            )
+          )}
         </div>
       </div>
     </header>
