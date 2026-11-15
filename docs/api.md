@@ -922,7 +922,7 @@ GET /recommendations?age=30s&tastes=kireime,simple&scene=tsukin
 | `tastes` | ○ | Q2 のテイストID。カンマ区切りで1〜2個。**1つ目を重視する** |
 | `scene` | ○ | Q3 のシーンID |
 
-点数の付け方は [設計書](../設計書.md) 4.9 のとおり（SQLは [DB設計書](db.md) 7.6）。0点のものは返さず、同じ点数なら `sort_order` 順。
+**`age` の年代向けのものだけを返す**（ほかの年代向けのものは返さない）。その中の点数の付け方は [設計書](../設計書.md) 4.9 のとおり（SQLは [DB設計書](db.md) 7.6）。同じ点数なら `sort_order` 順。
 
 **レスポンス（200）**
 
@@ -938,7 +938,7 @@ GET /recommendations?age=30s&tastes=kireime,simple&scene=tsukin
 }
 ```
 
-（`outfits` は `o01`、`o03`、`o02`、`o04` の4件中1件だけを載せ、`items` も省略している）
+（`outfits` は `o01`、`o03`、`o02`、`o15` の4件中1件だけを載せ、`items` も省略している）
 
 - 各要素は TrendSummary / OutfitSummary。点の高い順に並べて返す。**点数そのものは返さない**（画面の表示に使わない内部の値のため）。
 - 「あなたは『きれいめ×シンプル』タイプ」のようなタイプ名と説明文は、今までどおり画面で作る。

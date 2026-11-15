@@ -638,13 +638,12 @@ WHERE user_id = $1
 
 ### 7.6 診断のおすすめコーデ
 
-シーンが合う +4点、年代が合う +2点、1つ目のテイストが合う +2点、2つ目のテイストが合う +1点。0点は出さず、同じ点数なら `sort_order` 順で上位4件。
+年代が合うコーデだけを対象にする。その中で、シーンが合う +4点、1つ目のテイストが合う +2点、2つ目のテイストが合う +1点。同じ点数なら `sort_order` 順で上位4件（0点のものは、件数が足りないときの埋め合わせになる）。
 
 ```sql
 SELECT id FROM (
   SELECT o.id, o.sort_order,
          (CASE WHEN o.scene_id = sp.scene_id THEN 4 ELSE 0 END)
-       + (CASE WHEN EXISTS (SELECT 1 FROM outfit_ages oa WHERE oa.outfit_id = o.id AND oa.age_id = sp.age_id) THEN 2 ELSE 0 END)
        + (SELECT COALESCE(SUM(CASE spt.priority WHEN 1 THEN 2 ELSE 1 END), 0)
           FROM style_profile_tastes spt
           JOIN outfit_tastes ot ON ot.taste_id = spt.taste_id AND ot.outfit_id = o.id
@@ -652,13 +651,13 @@ SELECT id FROM (
   FROM outfits o
   CROSS JOIN style_profiles sp
   WHERE sp.user_id = $1 AND o.is_published
+    AND EXISTS (SELECT 1 FROM outfit_ages oa WHERE oa.outfit_id = o.id AND oa.age_id = sp.age_id)
 ) s
-WHERE score > 0
 ORDER BY score DESC, sort_order
 LIMIT 4;
 ```
 
-おすすめトレンドも同じ形で求める（年代 +2点、1つ目のテイスト +4点、2つ目 +2点、上位2件）。
+おすすめトレンドも同じ形で求める（年代が合うものだけ、1つ目のテイスト +4点、2つ目 +2点、上位2件）。
 
 ---
 
