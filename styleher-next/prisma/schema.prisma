@@ -191,8 +191,6 @@ model Trend {
   /// 注目度（0〜100）
   hotScore    Int            @map("hot_score") @db.SmallInt
   season      String         @db.VarChar(30)
-  /// カードに出すコーデ件数（表示用）
-  postCount   Int            @default(0) @map("post_count")
   description String
   sortOrder   Int            @default(0) @map("sort_order")
   isPublished Boolean        @default(true) @map("is_published")
@@ -204,6 +202,8 @@ model Trend {
   ages        TrendAge[]
   tastes      TrendTaste[]
   products    TrendProduct[]
+  outfits     TrendOutfit[]
+  dailyStats  TrendDailyStat[]
   favorites   Favorite[]
   recentViews RecentView[]
 
@@ -275,6 +275,33 @@ model TrendProduct {
   @@map("trend_products")
 }
 
+/// トレンドのコーデ（詳細画面のルックブック）。件数はカードの「◯件のコーデ」にも使う
+model TrendOutfit {
+  trendId   String @map("trend_id") @db.VarChar(30)
+  outfitId  String @map("outfit_id") @db.VarChar(30)
+  sortOrder Int    @default(0) @map("sort_order") @db.SmallInt
+  trend     Trend  @relation(fields: [trendId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  outfit    Outfit @relation(fields: [outfitId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([trendId, outfitId])
+  @@index([outfitId], map: "idx_trend_outfits_outfit_id")
+  @@map("trend_outfits")
+}
+
+/// トレンドの日ごとの反応（日本時間の日付）。注目度の計算に使う（docs/db.md 7.1）
+model TrendDailyStat {
+  trendId       String   @map("trend_id") @db.VarChar(30)
+  statDate      DateTime @map("stat_date") @db.Date
+  viewCount     Int      @default(0) @map("view_count")
+  /// お気に入りにした回数から外した回数を引いた数（マイナスもある）
+  favoriteCount Int      @default(0) @map("favorite_count")
+  trend         Trend    @relation(fields: [trendId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([trendId, statDate])
+  @@index([statDate], map: "idx_trend_daily_stats_stat_date")
+  @@map("trend_daily_stats")
+}
+
 // ===== 4. コーデ =====
 
 model Outfit {
@@ -289,6 +316,7 @@ model Outfit {
   updatedAt   DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)
   scene       Scene           @relation(fields: [sceneId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   products    OutfitProduct[]
+  trends      TrendOutfit[]
   tips        OutfitTip[]
   ages        OutfitAge[]
   tastes      OutfitTaste[]

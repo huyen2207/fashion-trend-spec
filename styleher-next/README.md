@@ -17,7 +17,7 @@ API（`app/api`）を動かすため、静的サイトとしての書き出し�
 
 ## データベース（Prisma + Neon）
 
-[DB設計書](../docs/db.md) のテーブル（34テーブル）を、ORM の [Prisma](https://www.prisma.io/) で Neon（PostgreSQL）に作っています。API（下の「API」）はこの DB を読み書きします。
+[DB設計書](../docs/db.md) のテーブル（36テーブル）を、ORM の [Prisma](https://www.prisma.io/) で Neon（PostgreSQL）に作っています。API（下の「API」）はこの DB を読み書きします。
 
 1. `.env.example` をコピーして `.env` を作り、Neon の接続文字列を入れる（`.env` はコミットしない）
    - `DATABASE_URL`：アプリ用。Connection pooling を ON にした `-pooler` 付きのホスト

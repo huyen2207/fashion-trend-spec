@@ -251,6 +251,7 @@ https://{ドメイン}/api/v1/{リソース}
 |---|---|---|
 | `POST /contact-inquiries` | 10分に5回 | IPアドレス |
 | `POST /newsletter-subscriptions` | 10分に5回 | IPアドレス |
+| `POST /trends/{trendId}/events` | 10分に60回 | IPアドレス |
 | 会員API | 1分に60回 | ユーザー |
 | 公開API | 1分に300回 | IPアドレス |
 
@@ -320,6 +321,7 @@ https://{ドメイン}/api/v1/{リソース}
 | B-01 | POST | `/newsletter-subscriptions` | メールマガジンに登録する（確認メールを送る） | F-20 |
 | B-02 | PATCH | `/newsletter-subscriptions/{subscriptionId}` | メールのリンクから、登録の確定・配信の停止をする（状態を変える） | F-20 |
 | B-03 | POST | `/contact-inquiries` | お問い合わせを送る | お問い合わせ |
+| B-04 | POST | `/trends/{trendId}/events` | トレンドへの反応（詳細を開いた・お気に入りにした・外した）を記録する。注目度の計算に使う | F-02, F-04 |
 
 ### 4.3 会員API（ログインが必要）
 
@@ -405,9 +407,9 @@ https://{ドメイン}/api/v1/{リソース}
 | `name` | string | トレンド名 | `trends.name` |
 | `subtitle` | string | サブタイトル | `trends.subtitle` |
 | `image` | string | メイン画像 | `trends.image` |
-| `hotScore` | number | 注目度（0〜100） | `trends.hot_score` |
+| `hotScore` | number | 注目度（0〜100）。`hot_score` と直近7日の反応から計算し、いちばん注目されているトレンドを100にした値（[DB設計書](db.md) 7.1） | `trends.hot_score`、`trend_daily_stats` |
 | `season` | string | 旬の時期 | `trends.season` |
-| `postCount` | number | コーデ件数（表示用） | `trends.post_count` |
+| `postCount` | number | このトレンドの公開中のコーデの件数 | `trend_outfits` |
 | `ageIds` | string[] | 対象の年代ID | `trend_ages` |
 | `tasteIds` | string[] | テイストID | `trend_tastes` |
 
@@ -510,9 +512,9 @@ GET /trends?age=30s
       "name": "秋のブラウンコーデ",
       "subtitle": "今季の主役カラー",
       "image": "1546859028-196808f21cd7",
-      "hotScore": 93,
+      "hotScore": 98,
       "season": "2026秋冬",
-      "postCount": 110,
+      "postCount": 5,
       "ageIds": ["20s", "30s", "40s"],
       "tasteIds": ["kireime", "casual"]
     }
@@ -539,7 +541,7 @@ GET /trends/{trendId}
 | `points` | string[] | ポイント（表示順） |
 | `tips` | string[] | 着こなしと着回しのコツ（表示順） |
 | `products` | ProductSummary[] | このトレンドのアイテム（表示順） |
-| `relatedOutfits` | OutfitSummary[] | おすすめコーデ。このトレンドのテイストを1つでも含む公開中のコーデを、`sort_order` 順に最大3件（今の画面と同じ決め方） |
+| `outfits` | (OutfitSummary ＋ `tips`)[] | このトレンドのコーデ（ルックブック）。`trend_outfits` の公開中のコーデを表示順にすべて。`tips` はコーデの着こなしのコツ（表示順） |
 
 ```json
 {
@@ -547,9 +549,9 @@ GET /trends/{trendId}
   "name": "秋のブラウンコーデ",
   "subtitle": "今季の主役カラー",
   "image": "1546859028-196808f21cd7",
-  "hotScore": 93,
+  "hotScore": 98,
   "season": "2026秋冬",
-  "postCount": 110,
+  "postCount": 5,
   "ageIds": ["20s", "30s", "40s"],
   "tasteIds": ["kireime", "casual"],
   "description": "キャメル、モカ、チョコレート。深みのあるブラウンが今季の主役です。ベージュや白と合わせれば、やさしく大人っぽい秋の装いに。",
@@ -573,31 +575,32 @@ GET /trends/{trendId}
       "wearCount": 1
     }
   ],
-  "relatedOutfits": [
+  "outfits": [
     {
-      "id": "o01",
-      "sceneId": "tsukin",
-      "title": "白シャツで清潔感のある通勤コーデ",
-      "image": "1758600587839-56ba05596c69",
-      "ageIds": ["20s", "30s", "40s"],
-      "tasteIds": ["kireime", "simple"],
+      "id": "o05",
+      "sceneId": "kyujitsu",
+      "title": "秋のレトロカジュアル",
+      "image": "1635853139281-d6b25117ee7c",
+      "ageIds": ["20s"],
+      "tasteIds": ["casual"],
       "mainProductId": null,
       "items": [
-        { "id": "p01", "name": "レギュラーカラー白シャツ", "image": "1603252109303-2751441dd157", "price": 3990 },
-        { "id": "p09", "name": "センタープレスワイドパンツ", "image": "1632282005753-29f80ed13c93", "price": 4990 },
-        { "id": "p17", "name": "ポインテッドパンプス", "image": "1621996659490-3275b4d0d951", "price": 5990 }
+        { "id": "p04", "name": "ざっくりVネックカーディガン", "image": "1683315565563-f72590773805", "price": 5990 },
+        { "id": "p11", "name": "フレアミニスカート", "image": "1789110853398-539d78dd63bc", "price": 3990 },
+        { "id": "p16", "name": "ビットローファー", "image": "1649503377051-e092f490c482", "price": 7990 }
       ],
-      "totalPrice": 14970
+      "totalPrice": 17970,
+      "tips": ["ローファー×ソックスでこなれ感を"]
     }
   ]
 }
 ```
 
-（`products` は4件中1件、`relatedOutfits` は3件中1件だけを載せている）
+（`products` は4件中1件、`outfits` は5件中1件だけを載せている）
 
 **エラー**：`404 NOT_FOUND`（存在しない、または非公開）
 
-使うテーブル：`trends`、`trend_images`、`trend_points`、`trend_tips`、`trend_ages`、`trend_tastes`、`trend_products`、`products`、`product_links`、`shops`、`outfits`、`outfit_products`、`outfit_ages`、`outfit_tastes`
+使うテーブル：`trends`、`trend_images`、`trend_points`、`trend_tips`、`trend_ages`、`trend_tastes`、`trend_products`、`trend_outfits`、`trend_daily_stats`、`products`、`product_links`、`shops`、`outfits`、`outfit_products`、`outfit_tips`、`outfit_ages`、`outfit_tastes`
 
 ### 5.4 A-04 コーデ一覧
 
@@ -922,15 +925,15 @@ GET /recommendations?age=30s&tastes=kireime,simple&scene=tsukin
 | `tastes` | ○ | Q2 のテイストID。カンマ区切りで1〜2個。**1つ目を重視する** |
 | `scene` | ○ | Q3 のシーンID |
 
-点数の付け方は [設計書](../設計書.md) 4.9 のとおり（SQLは [DB設計書](db.md) 7.6）。0点のものは返さず、同じ点数なら `sort_order` 順。
+**`age` の年代向けのものだけを返す**（ほかの年代向けのものは返さない）。その中の点数の付け方は [設計書](../設計書.md) 4.9 のとおり（SQLは [DB設計書](db.md) 7.6）。同じ点数なら `sort_order` 順。
 
 **レスポンス（200）**
 
 ```json
 {
   "trends": [
-    { "id": "kireime", "name": "きれいめカジュアル", "subtitle": "上品で、ちゃんと見える", "image": "1514813836041-518668f092b1", "hotScore": 95, "season": "2026秋冬", "postCount": 128, "ageIds": ["20s", "30s", "40s"], "tasteIds": ["kireime", "simple"] },
-    { "id": "office", "name": "オフィスカジュアル", "subtitle": "通勤服は、きちんとラクに", "image": "1774205884993-86c63afbe871", "hotScore": 91, "season": "通年", "postCount": 142, "ageIds": ["20s", "30s", "40s"], "tasteIds": ["kireime", "simple"] }
+    { "id": "kireime", "name": "きれいめカジュアル", "subtitle": "上品で、ちゃんと見える", "image": "1514813836041-518668f092b1", "hotScore": 100, "season": "2026秋冬", "postCount": 6, "ageIds": ["20s", "30s", "40s"], "tasteIds": ["kireime", "simple"] },
+    { "id": "office", "name": "オフィスカジュアル", "subtitle": "通勤服は、きちんとラクに", "image": "1774205884993-86c63afbe871", "hotScore": 96, "season": "通年", "postCount": 4, "ageIds": ["20s", "30s", "40s"], "tasteIds": ["kireime", "simple"] }
   ],
   "outfits": [
     { "id": "o01", "sceneId": "tsukin", "title": "白シャツで清潔感のある通勤コーデ", "image": "1758600587839-56ba05596c69", "ageIds": ["20s", "30s", "40s"], "tasteIds": ["kireime", "simple"], "mainProductId": null, "items": [], "totalPrice": 14970 }
@@ -938,7 +941,7 @@ GET /recommendations?age=30s&tastes=kireime,simple&scene=tsukin
 }
 ```
 
-（`outfits` は `o01`、`o03`、`o02`、`o04` の4件中1件だけを載せ、`items` も省略している）
+（`outfits` は `o01`、`o03`、`o02`、`o15` の4件中1件だけを載せ、`items` も省略している）
 
 - 各要素は TrendSummary / OutfitSummary。点の高い順に並べて返す。**点数そのものは返さない**（画面の表示に使わない内部の値のため）。
 - 「あなたは『きれいめ×シンプル』タイプ」のようなタイプ名と説明文は、今までどおり画面で作る。
@@ -1092,6 +1095,32 @@ POST /contact-inquiries
 
 使うテーブル：`contact_inquiries`、`inquiry_types`
 
+### 6.4 B-04 トレンドへの反応を記録する
+
+```
+POST /trends/{trendId}/events
+```
+
+トレンドの注目度（[DB設計書](db.md) 7.1）の材料を集める。ログインしていなくても使える。だれが反応したかは保存せず、トレンドごと・日ごと（日本時間）の回数だけを足す。
+
+**リクエスト**
+
+| 項目 | 型 | 必須 | 説明 |
+|---|---|---|---|
+| `type` | string | ○ | `view`（詳細を開いた）/ `favorite`（お気に入りにした）/ `unfavorite`（お気に入りから外した） |
+
+```json
+{ "type": "view" }
+```
+
+**レスポンス**：`204 No Content`
+
+画面は、同じトレンドの `view` をページを開いている間に1回だけ送る。失敗しても画面には何も出さない。
+
+**エラー**：`400 VALIDATION_ERROR`、`404 NOT_FOUND`（存在しない、または非公開）、`429 TOO_MANY_REQUESTS`
+
+使うテーブル：`trend_daily_stats`
+
 ---
 
 ## 7. 会員APIの詳細
@@ -1133,7 +1162,7 @@ GET /me/favorites
 ```json
 {
   "trends": [
-    { "id": "brown", "name": "秋のブラウンコーデ", "subtitle": "今季の主役カラー", "image": "1546859028-196808f21cd7", "hotScore": 93, "season": "2026秋冬", "postCount": 110, "ageIds": ["20s", "30s", "40s"], "tasteIds": ["kireime", "casual"] }
+    { "id": "brown", "name": "秋のブラウンコーデ", "subtitle": "今季の主役カラー", "image": "1546859028-196808f21cd7", "hotScore": 98, "season": "2026秋冬", "postCount": 5, "ageIds": ["20s", "30s", "40s"], "tasteIds": ["kireime", "casual"] }
   ],
   "outfits": [],
   "products": []
@@ -1325,7 +1354,6 @@ PUT /admin/{resource}/{id}
   "image": "1546859028-196808f21cd7",
   "hotScore": 93,
   "season": "2026秋冬",
-  "postCount": 110,
   "description": "キャメル、モカ、チョコレート。深みのあるブラウンが今季の主役です。ベージュや白と合わせれば、やさしく大人っぽい秋の装いに。",
   "sortOrder": 6,
   "isPublished": false,
@@ -1334,7 +1362,8 @@ PUT /admin/{resource}/{id}
   "tips": ["ブラウン×白で明るく、ブラウン×黒で引き締め"],
   "ageIds": ["20s", "30s", "40s"],
   "tasteIds": ["kireime", "casual"],
-  "productIds": ["p08", "p04", "p16", "p18"]
+  "productIds": ["p08", "p04", "p16", "p18"],
+  "outfitIds": ["o25", "o05", "o07", "o18", "o04"]
 }
 ```
 
@@ -1506,13 +1535,13 @@ GET /admin/audit-logs?table=products&userId=…&from=2026-09-01&to=2026-09-30&li
 | S-11 コラム | A-09 | ページを開いたとき |
 | S-12 コミュニティ | A-12 | ページを開いたとき |
 | S-13 メールマガジン登録 | B-01 | 送信したとき（実際に配信を始めてから） |
-| M-01 トレンド詳細 | A-03、（ログイン中）C-07 | 詳細を開いたとき |
+| M-01 トレンド詳細 | A-03、B-04（`view`）、（ログイン中）C-07 | 詳細を開いたとき |
 | M-02 コーデ詳細 | A-05、（ログイン中）C-07 | 詳細を開いたとき |
 | M-03 アイテム詳細 | A-07、（ログイン中）C-07 | 詳細を開いたとき |
 | M-04 コラム記事 | A-10 | 記事を開いたとき |
 | M-05 検索 | A-14 | 入力が止まってから（250ミリ秒後） |
 | M-06 お気に入り | （ログイン中）C-03、（ログインなし）A-02・A-04・A-06 の `ids` | 一覧を開いたとき |
-| ハートボタン | （ログイン中）C-04・C-05 | 押したとき |
+| ハートボタン | （ログイン中）C-04・C-05、（トレンドのとき）B-04（`favorite` / `unfavorite`） | 押したとき |
 | お問い合わせ（`/contact`） | A-01、B-03 | 開いたとき・送信したとき |
 | ログイン直後 | C-01、C-12 | ログインしたとき |
 | メールマガジンの確認・配信停止のページ | B-02 | メールのリンクからページを開いたとき |
@@ -1545,7 +1574,8 @@ sequenceDiagram
 
 | 今の項目（`lib/data.ts`） | APIの項目 | 備考 |
 |---|---|---|
-| `Trend.sub` / `img` / `hot` / `posts` / `desc` | `subtitle` / `image` / `hotScore` / `postCount` / `description` | |
+| `Trend.sub` / `img` / `hot` / `desc` | `subtitle` / `image` / `hotScore` / `description` | `hotScore` は `hot` に反応を足して計算した値（管理APIでは `hot` をそのまま `hotScore` として送る） |
+| `Trend.outfits` | `outfits`（詳細）・`postCount`（件数）、管理APIでは `outfitIds` | |
 | `Trend.gallery` | `images` | |
 | `Trend.ages` / `tastes` | `ageIds` / `tasteIds` | |
 | `Trend.products`（ID の配列） | `products`（ProductSummary の配列） | 詳細（A-03）のみ |
@@ -1652,6 +1682,7 @@ v0.1 を次の5つの観点で見直した。
 
 | 版数 | 日付 | 内容 |
 |---|---|---|
+| v0.6 | 2026年11月15日 | トレンドの注目度（`hotScore`）とコーデ件数（`postCount`）を実際のデータから計算するようにした。反応を記録する B-04 を追加し、トレンド詳細（A-03）の `relatedOutfits` を、トレンドのコーデをすべて返す `outfits`（コツ付き）に変えた。管理APIのトレンドに `outfitIds` を追加し、`postCount` をなくした |
 | v0.5 | 2026年10月20日 | next-auth（メールアドレスとパスワード）でのログインを実装し、会員API・管理APIの認証をアクセストークンからセッションの Cookie に変更した（2.1・2.2・3.4・7章・9.2）。`users` に `password_hash` を追加 |
 | v0.1 | 2026年9月29日 | 初版作成（DB設計書 v0.2 と、現在の画面の実装にもとづく） |
 | v0.4 | 2026年10月6日 | 画面からAPIを使うようにしたのに合わせて、ブラウザ向けのキャッシュから `stale-while-revalidate` を外し（CDN向けの `CDN-Cache-Control` に移動）、検索（A-14）を画面から使うことにした |

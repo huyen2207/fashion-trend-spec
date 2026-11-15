@@ -7,6 +7,7 @@ import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
 import { clientIp, countHit } from "@/lib/api/rateLimit";
+import { logger } from "@/lib/logger";
 
 declare module "next-auth" {
   interface Session {
@@ -17,11 +18,26 @@ declare module "next-auth" {
 // ログインの試行回数の制限（パスワードの総当たりを防ぐ）：同じIPから10分に10回まで
 const LOGIN_LIMIT = { limit: 10, windowSec: 600 };
 
+// next-auth のエラーのうち、利用者の操作で起きるもの（サーバーの不具合ではないので Discord に通知しない）
+const AUTH_CLIENT_ERRORS = new Set(["CredentialsSignin", "MissingCSRF", "AccessDenied", "Verification"]);
+
 class TooManyAttempts extends CredentialsSignin {
   code = "too_many_attempts";
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // next-auth のログも、アプリのログ（lib/logger.ts）にそろえる
+  logger: {
+    error(error) {
+      // パスワード違い・回数制限（CredentialsSignin）や CSRF のずれなど、利用者の操作で起きるものは warn にする（メールアドレスは書かない）
+      const { type, code } = error as Error & { type?: string; code?: string };
+      if (type && AUTH_CLIENT_ERRORS.has(type)) logger.warn("ログインに失敗しました", { type, code });
+      else void logger.error("認証（next-auth）でエラーが発生しました", { type }, error);
+    },
+    warn(code) {
+      logger.warn("next-auth の警告", { code });
+    },
+  },
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: { signIn: "/login" },
   providers: [
@@ -31,7 +47,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { type: "password", label: "パスワード" },
       },
       async authorize(credentials, request) {
-        if (!countHit(`login:${clientIp(request)}`, LOGIN_LIMIT.limit, LOGIN_LIMIT.windowSec).ok) throw new TooManyAttempts();
+        if (!countHit(`login:${clientIp(request)}`, LOGIN_LIMIT.limit, LOGIN_LIMIT.windowSec).ok) {
+          logger.warn("ログインの試行回数の制限を超えました", { code: "too_many_attempts" });
+          throw new TooManyAttempts();
+        }
         const email = typeof credentials.email === "string" ? credentials.email.trim() : "";
         const password = typeof credentials.password === "string" ? credentials.password : "";
         if (!email || !password || email.length > 254) return null;

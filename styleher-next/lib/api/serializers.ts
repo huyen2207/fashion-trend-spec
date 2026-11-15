@@ -51,7 +51,7 @@ export function trendSummary(t: TrendRow) {
     name: t.name,
     subtitle: t.subtitle,
     image: t.image,
-    hotScore: t.hotScore,
+    hotScore: t.liveHotScore,
     season: t.season,
     postCount: t.postCount,
     ageIds: t.ageIds,
@@ -99,11 +99,11 @@ export function trendDetail(c: Catalog, t: TrendRow) {
       .map((id) => findPublished.product(c, id))
       .filter((p): p is ProductRow => !!p)
       .map((p) => productSummary(c, p)),
-    // おすすめコーデ：このトレンドのテイストを1つでも含むコーデを最大3件（今の画面と同じ決め方）
-    relatedOutfits: publishedOutfits(c)
-      .filter((o) => o.tasteIds.some((x) => t.tasteIds.includes(x)))
-      .slice(0, 3)
-      .map((o) => outfitSummary(c, o)),
+    // このトレンドのコーデ（ルックブック）。まねしやすいよう、着こなしのコツも付ける
+    outfits: t.outfitIds
+      .map((id) => findPublished.outfit(c, id))
+      .filter((o): o is OutfitRow => !!o)
+      .map((o) => ({ ...outfitSummary(c, o), tips: o.tips })),
   };
 }
 

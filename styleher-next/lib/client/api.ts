@@ -56,7 +56,8 @@ export type TrendDetail = TrendSummary & {
   points: string[];
   tips: string[];
   products: ProductSummary[];
-  relatedOutfits: OutfitSummary[];
+  // このトレンドのコーデ（ルックブック）
+  outfits: (OutfitSummary & { tips: string[] })[];
 };
 export type OutfitDetail = OutfitSummary & {
   description: string;
@@ -175,6 +176,16 @@ export function useApi<T>(path: string | null) {
     loading: !!path && (!fresh || (state.data === undefined && !state.error)),
     reload,
   };
+}
+
+// トレンドへの反応を記録する（B-04。注目度の計算に使う）。失敗しても画面には何も出さない
+export function sendTrendEvent(trendId: string, type: "view" | "favorite" | "unfavorite") {
+  apiFetch(`/trends/${encodeURIComponent(trendId)}/events`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type }),
+    keepalive: true,
+  }).catch(() => {});
 }
 
 // クエリ文字列を作る（空の値は付けない）

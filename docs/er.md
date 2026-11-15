@@ -9,7 +9,7 @@
 
 ## 1. 図の読み方
 
-本書は、[DB設計書](db.md) で定めた34テーブルのつながりを図にしたものである。各列の型・制約の詳細は DB設計書の4章を参照。
+本書は、[DB設計書](db.md) で定めた36テーブルのつながりを図にしたものである。各列の型・制約の詳細は DB設計書の4章を参照。
 
 図は Mermaid で書いている。GitHub や、Mermaid に対応したエディター（VS Code の拡張機能など）で開くと図として表示される。
 
@@ -56,6 +56,9 @@ erDiagram
   tastes ||--o{ trend_tastes : ""
   trends ||--|{ trend_products : "関連アイテム"
   products ||--o{ trend_products : ""
+  trends ||--o{ trend_outfits : "ルックブック"
+  outfits ||--o{ trend_outfits : ""
+  trends ||--o{ trend_daily_stats : "日ごとの反応"
 
   %% コーデ
   scenes ||--o{ outfits : "シーンで分ける"
@@ -111,7 +114,7 @@ erDiagram
 |---|---|
 | マスタ | `scenes`, `ages`, `tastes`, `categories`, `colors`, `post_tags`, `inquiry_types` |
 | ショップ・アイテム | `shops`, `products`, `product_links` |
-| トレンド | `trends`, `trend_images`, `trend_points`, `trend_tips`, `trend_ages`, `trend_tastes`, `trend_products` |
+| トレンド | `trends`, `trend_images`, `trend_points`, `trend_tips`, `trend_ages`, `trend_tastes`, `trend_products`, `trend_outfits`, `trend_daily_stats` |
 | コーデ | `outfits`, `outfit_products`, `outfit_tips`, `outfit_ages`, `outfit_tastes` |
 | コラム・トップページ | `posts`, `post_paragraphs`, `hero_slides`, `community_images` |
 | ユーザー | `users`, `favorites`, `recent_views`, `style_profiles`, `style_profile_tastes` |
@@ -203,15 +206,17 @@ erDiagram
   tastes ||--o{ trend_tastes : "当てはまる"
   trends ||--|{ trend_products : "関連アイテム"
   products ||--o{ trend_products : "紹介される"
+  trends ||--o{ trend_outfits : "ルックブック"
+  outfits ||--o{ trend_outfits : "紹介される"
+  trends ||--o{ trend_daily_stats : "日ごとの反応"
 
   trends {
     code_id id PK "トレンドID（kireime）"
     varchar name "トレンド名"
     varchar subtitle "サブタイトル"
     varchar image "メイン画像"
-    smallint hot_score "注目度（0〜100）"
+    smallint hot_score "注目度の基準値（0〜100）"
     varchar season "旬の時期"
-    integer post_count "コーデ件数（表示用）"
     text description "説明"
     integer sort_order "並び順（今日の注目の順番）"
     boolean is_published "公開"
@@ -245,6 +250,17 @@ erDiagram
     code_id trend_id PK, FK "トレンドID"
     code_id product_id PK, FK "アイテムID"
     smallint sort_order "表示順"
+  }
+  trend_outfits {
+    code_id trend_id PK, FK "トレンドID"
+    code_id outfit_id PK, FK "コーデID"
+    smallint sort_order "表示順"
+  }
+  trend_daily_stats {
+    code_id trend_id PK, FK "トレンドID"
+    date stat_date PK "日付（日本時間）"
+    integer view_count "詳細を開いた回数"
+    integer favorite_count "お気に入りの数（増減）"
   }
   ages {
     code_id id PK "年代ID（20s）"
@@ -558,6 +574,8 @@ erDiagram
 | アイテム ⇔ ショップ（購入リンク） | 多対多 | 1つのアイテムに複数のECサイトの購入リンクがあり、比べて選べる（F-10） | 中間テーブル `product_links` |
 | トレンド ⇔ 年代・テイスト | 多対多 | 1つのトレンドが複数の年代・テイストに当てはまる | 中間テーブル `trend_ages` / `trend_tastes` |
 | トレンド ⇔ アイテム | 多対多 | トレンドごとに関連アイテムを紹介する。1つのアイテムが複数のトレンドに出てもよい | 中間テーブル `trend_products` |
+| トレンド ⇔ コーデ | 多対多 | トレンドの詳細で、そのトレンドのコーデ（ルックブック）を見せる。1つのコーデが複数のトレンドに出てもよい | 中間テーブル `trend_outfits` |
+| トレンド → 日ごとの反応 | 1対多 | トレンドごと・日ごとに、詳細を開いた回数とお気に入りの数を数える（注目度の計算） | `trend_daily_stats.trend_id` |
 | シーン → コーデ | 1対多 | 1つのコーデは、1つのシーンに属する | `outfits.scene_id` |
 | コーデ ⇔ アイテム | 多対多 | 1つのコーデは複数のアイテムで組み立て、1つのアイテムは複数のコーデで使う（着回し・F-11） | 中間テーブル `outfit_products` |
 | コーデ ⇔ 年代・テイスト | 多対多 | 1つのコーデが複数の年代・テイストに当てはまる | 中間テーブル `outfit_ages` / `outfit_tastes` |

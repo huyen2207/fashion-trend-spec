@@ -176,9 +176,8 @@ export const RESOURCES: Record<string, ResourceDef> = {
       name: v.str(b.name, "name", { max: 50, label: "トレンド名" }),
       subtitle: v.str(b.subtitle, "subtitle", { max: 100, label: "サブタイトル" }),
       image: v.str(b.image, "image", { max: 255, label: "メイン画像" }),
-      hotScore: v.int(b.hotScore, "hotScore", "注目度", { min: 0, max: 100 }),
+      hotScore: v.int(b.hotScore, "hotScore", "注目度の基準値", { min: 0, max: 100 }),
       season: v.str(b.season, "season", { max: 30, label: "旬の時期" }),
-      postCount: v.int(b.postCount, "postCount", "コーデ件数", { min: 0, max: 1_000_000 }),
       description: v.str(b.description, "description", { max: 5000, label: "説明" }),
       sortOrder: sortOrderOf(v, b),
       isPublished: v.bool(b.isPublished, "isPublished", "公開"),
@@ -188,11 +187,12 @@ export const RESOURCES: Record<string, ResourceDef> = {
       ageIds: v.refList(b.ageIds, "ageIds", "年代", has(c.ages)),
       tasteIds: v.refList(b.tasteIds, "tasteIds", "テイスト", has(c.tastes)),
       productIds: v.refList(b.productIds, "productIds", "アイテム", has(c.products)),
+      outfitIds: v.refList(b.outfitIds, "outfitIds", "コーデ", has(c.outfits), { min: 0 }),
     }),
-    // 子テーブル（画像・ポイント・コツ・年代・テイスト・アイテム）は全部消して入れ直す（docs/db.md 2.4）
+    // 子テーブル（画像・ポイント・コツ・年代・テイスト・アイテム・コーデ）は全部消して入れ直す（docs/db.md 2.4）
     save: async (tx, id, data, isNew) => {
-      const { images, points, tips, ageIds, tasteIds, productIds, ...fields } = data as Data & Record<
-        "images" | "points" | "tips" | "ageIds" | "tasteIds" | "productIds",
+      const { images, points, tips, ageIds, tasteIds, productIds, outfitIds, ...fields } = data as Data & Record<
+        "images" | "points" | "tips" | "ageIds" | "tasteIds" | "productIds" | "outfitIds",
         string[]
       >;
       const trendId = String(id);
@@ -205,6 +205,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
         tx.trendAge.deleteMany(where),
         tx.trendTaste.deleteMany(where),
         tx.trendProduct.deleteMany(where),
+        tx.trendOutfit.deleteMany(where),
       ]);
       await Promise.all([
         tx.trendImage.createMany({ data: images.map((image, i) => ({ trendId, sortOrder: i + 1, image })) }),
@@ -213,6 +214,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
         tx.trendAge.createMany({ data: ageIds.map((ageId) => ({ trendId, ageId })) }),
         tx.trendTaste.createMany({ data: tasteIds.map((tasteId) => ({ trendId, tasteId })) }),
         tx.trendProduct.createMany({ data: productIds.map((productId, i) => ({ trendId, productId, sortOrder: i + 1 })) }),
+        tx.trendOutfit.createMany({ data: outfitIds.map((outfitId, i) => ({ trendId, outfitId, sortOrder: i + 1 })) }),
       ]);
       return trendId;
     },

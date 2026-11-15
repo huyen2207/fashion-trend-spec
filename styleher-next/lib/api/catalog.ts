@@ -40,9 +40,9 @@ export type TrendRow = {
   name: string;
   subtitle: string;
   image: string;
+  // 運営者が決める注目度の基準値（0〜100）。画面に出すのは、反応を足して計算した liveHotScore
   hotScore: number;
   season: string;
-  postCount: number;
   description: string;
   sortOrder: number;
   isPublished: boolean;
@@ -52,6 +52,15 @@ export type TrendRow = {
   ageIds: string[];
   tasteIds: string[];
   productIds: string[];
+  // このトレンドのコーデ（ルックブック）
+  outfitIds: string[];
+  // 以下は DB の値から計算する（読み取り専用）
+  // 公開中のコーデの件数（カードの「◯件のコーデ」）
+  postCount: number;
+  // 直近7日の反応（詳細を開いた回数・お気に入りの数）
+  recent: { views: number; favorites: number };
+  // 画面に出す注目度（0〜100。docs/db.md 7.1）
+  liveHotScore: number;
 } & Timestamps;
 
 export type OutfitRow = {
@@ -161,8 +170,28 @@ export async function loadMasters(db: Db = prisma): Promise<Masters> {
   };
 }
 
+// ---- 注目度（docs/db.md 7.1） ----
+// 直近7日（日本時間・今日を含む）の反応から計算する。反応の点数 ＝ 詳細を開いた回数 ＋ お気に入りの数 × 3。
+// 反応が少ないうちに数字が大きくぶれないよう、運営者が決めた hot_score を「30点分の反応」として足しておく。
+// 公開中のトレンドのうち、いちばん点数の高いものを 100% にする
+export const HOT_WINDOW_DAYS = 7;
+const FAVORITE_WEIGHT = 3;
+const BASE_POINTS = 30;
+
+// 日本時間の今日（date 型の列に入れる値。UTC の0時にする）
+export function todayJst(now = new Date()) {
+  return new Date(`${new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10)}T00:00:00Z`);
+}
+
+function withLiveHotScores(trends: TrendRow[]): TrendRow[] {
+  const points = (t: TrendRow) => (t.hotScore / 100) * BASE_POINTS + t.recent.views + Math.max(t.recent.favorites, 0) * FAVORITE_WEIGHT;
+  const max = Math.max(...trends.filter((t) => t.isPublished).map(points), 0);
+  return trends.map((t) => ({ ...t, liveHotScore: max > 0 ? Math.min(Math.round((points(t) / max) * 100), 100) : 0 }));
+}
+
 export async function loadCatalog(db: Db = prisma): Promise<Catalog> {
-  const [masters, shops, products, trends, outfits, posts, heroSlides, communityImages] = await Promise.all([
+  const since = new Date(todayJst().getTime() - (HOT_WINDOW_DAYS - 1) * 24 * 60 * 60 * 1000);
+  const [masters, shops, products, trends, outfits, posts, heroSlides, communityImages, trendStats] = await Promise.all([
     loadMasters(db),
     db.shop.findMany({ orderBy: [...byOrder] }),
     db.product.findMany({
@@ -179,6 +208,7 @@ export async function loadCatalog(db: Db = prisma): Promise<Catalog> {
         ages: { orderBy: { age: { sortOrder: "asc" } } },
         tastes: { orderBy: { taste: { sortOrder: "asc" } } },
         products: { orderBy: [{ sortOrder: "asc" }, { productId: "asc" }] },
+        outfits: { orderBy: [{ sortOrder: "asc" }, { outfitId: "asc" }] },
       },
     }),
     db.outfit.findMany({
@@ -193,7 +223,10 @@ export async function loadCatalog(db: Db = prisma): Promise<Catalog> {
     db.post.findMany({ orderBy: [{ publishedOn: "desc" }, { id: "asc" }], include: { paragraphs: { orderBy: bySort } } }),
     db.heroSlide.findMany({ orderBy: [...byOrder] }),
     db.communityImage.findMany({ orderBy: [...byOrder] }),
+    db.trendDailyStat.groupBy({ by: ["trendId"], where: { statDate: { gte: since } }, _sum: { viewCount: true, favoriteCount: true } }),
   ]);
+  const publishedOutfitIds = new Set(outfits.filter((o) => o.isPublished).map((o) => o.id));
+  const statsOf = (trendId: string) => trendStats.find((x) => x.trendId === trendId)?._sum;
 
   return {
     ...masters,
@@ -224,25 +257,30 @@ export async function loadCatalog(db: Db = prisma): Promise<Catalog> {
         .map((l) => ({ shopId: l.shopId, customUrl: l.customUrl })),
       ...stamps(p),
     })),
-    trends: trends.map((t) => ({
-      id: t.id,
-      name: t.name,
-      subtitle: t.subtitle,
-      image: t.image,
-      hotScore: t.hotScore,
-      season: t.season,
-      postCount: t.postCount,
-      description: t.description,
-      sortOrder: t.sortOrder,
-      isPublished: t.isPublished,
-      images: t.images.map((x) => x.image),
-      points: t.points.map((x) => x.body),
-      tips: t.tips.map((x) => x.body),
-      ageIds: t.ages.map((x) => x.ageId),
-      tasteIds: t.tastes.map((x) => x.tasteId),
-      productIds: t.products.map((x) => x.productId),
-      ...stamps(t),
-    })),
+    trends: withLiveHotScores(
+      trends.map((t) => ({
+        id: t.id,
+        name: t.name,
+        subtitle: t.subtitle,
+        image: t.image,
+        hotScore: t.hotScore,
+        season: t.season,
+        description: t.description,
+        sortOrder: t.sortOrder,
+        isPublished: t.isPublished,
+        images: t.images.map((x) => x.image),
+        points: t.points.map((x) => x.body),
+        tips: t.tips.map((x) => x.body),
+        ageIds: t.ages.map((x) => x.ageId),
+        tasteIds: t.tastes.map((x) => x.tasteId),
+        productIds: t.products.map((x) => x.productId),
+        outfitIds: t.outfits.map((x) => x.outfitId),
+        postCount: t.outfits.filter((x) => publishedOutfitIds.has(x.outfitId)).length,
+        recent: { views: statsOf(t.id)?.viewCount ?? 0, favorites: statsOf(t.id)?.favoriteCount ?? 0 },
+        liveHotScore: 0,
+        ...stamps(t),
+      }))
+    ),
     outfits: outfits.map((o) => ({
       id: o.id,
       sceneId: o.sceneId,

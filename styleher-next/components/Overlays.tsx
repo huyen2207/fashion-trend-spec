@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Search } from "lucide-react";
+import { ExternalLink, Lightbulb, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ import {
   HeartButton,
   LoadError,
   MiniProduct,
+  OpenCard,
   OutfitResult,
   PostResult,
   ProductResult,
@@ -224,15 +225,48 @@ function TrendDetail({ id }: { id: string }) {
           ))}
         </div>
       </Block>
-      {t.relatedOutfits.length > 0 && (
-        <Block title="おすすめコーデ">
-          <ResultList>
-            {t.relatedOutfits.map((o) => (
-              <OutfitResult key={o.id} o={o} />
-            ))}
-          </ResultList>
+      {t.outfits.length > 0 && (
+        <Block title={`このトレンドのコーデ（${t.outfits.length}）`} sub="まねしたいコーデをタップすると、使っているアイテムと買えるショップが見られます。">
+          <Lookbook outfits={t.outfits} />
         </Block>
       )}
+    </div>
+  );
+}
+
+// トレンドのルックブック：コーデの写真に、着こなしのコツとアイテムを添えて並べる
+function Lookbook({ outfits }: { outfits: TrendDetailData["outfits"] }) {
+  const scenes = useMasters()?.scenes;
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {outfits.map((o) => (
+        <OpenCard key={o.id} type="outfit" id={o.id} label={`コーデ「${o.title}」を見る`}>
+          <div className="relative aspect-[3/4] overflow-hidden">
+            <img src={img(o.image, 360, 480)} alt={o.title} loading="lazy" className="size-full object-cover transition duration-500 group-hover:scale-105" />
+            <Badge variant="secondary" className="absolute bottom-2 left-2 bg-white/90">
+              {nameOf(scenes, o.sceneId)}
+            </Badge>
+            <HeartButton type="outfit" id={o.id} className="absolute top-1 right-1 bg-white/80 hover:bg-white" />
+          </div>
+          <div className="flex flex-1 flex-col gap-2 p-3">
+            <h4 className="text-sm leading-snug font-medium">{o.title}</h4>
+            {o.tips[0] && (
+              <p className="flex gap-1 text-xs leading-relaxed text-muted-foreground">
+                <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-rose" aria-label="コツ" />
+                {o.tips[0]}
+              </p>
+            )}
+            <div className="mt-auto flex items-center gap-2 pt-1">
+              <div className="flex -space-x-2">
+                {o.items.map((p) => (
+                  <img key={p.id} src={img(p.image, 80, 80)} alt={p.name} loading="lazy" className="size-7 rounded-full border-2 border-card object-cover" />
+                ))}
+              </div>
+              <span className="text-[11px] text-muted-foreground">{money(o.totalPrice)}〜</span>
+            </div>
+          </div>
+        </OpenCard>
+      ))}
     </div>
   );
 }
