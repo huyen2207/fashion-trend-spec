@@ -16,14 +16,10 @@ export function TrendSection() {
   const [age, setAge] = useState("all");
   // 年代の絞り込みは API（A-02 の age）で行う
   const { data, lastData, error, reload } = useApi<List<TrendSummary>>(`/trends${qs({ age })}`);
-  const all = useApi<List<TrendSummary>>("/trends").data?.items ?? [];
   const trends = (data ?? lastData)?.items;
 
-  // 日替わりで「今日の注目」を先頭にする（全トレンドの並び順で、今日の注目から一周させる）
-  const order = new Map(all.map((t, i) => [t.id, i]));
-  const start = order.get(todayTrendId) ?? 0;
-  const pos = (id: string) => ((order.get(id) ?? 0) - start + all.length) % Math.max(all.length, 1);
-  const list = trends && [...trends].sort((a, b) => pos(a.id) - pos(b.id));
+  // 日替わりの「今日の注目」を先頭に、あとは注目度（直近7日の反応から計算）の高い順に並べる
+  const list = trends && [...trends].sort((a, b) => Number(b.id === todayTrendId) - Number(a.id === todayTrendId) || b.hotScore - a.hotScore);
 
   return (
     <Section id="trends">

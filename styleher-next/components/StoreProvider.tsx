@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { useApi, useMasters, type List, type TrendSummary } from "@/lib/client/api";
+import { sendTrendEvent, useApi, useMasters, type List, type TrendSummary } from "@/lib/client/api";
 import { load, save } from "@/lib/utils";
 
 // お気に入りにできる種類と、詳細モーダルで開ける種類
@@ -21,6 +21,8 @@ export type OutfitFilter = { scene: string; age: string; taste: string };
 const FAV_KEY = "styleher:favorites";
 const RECENT_KEY = "styleher:recent";
 const RECENT_MAX = 8;
+// 同じトレンドを何度開いても、ページを開いている間は1回だけ数える
+const viewedTrends = new Set<string>();
 
 type Store = {
   todayText: string;
@@ -75,6 +77,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const next = { ...favs, [type]: on ? [...favs[type], id] : favs[type].filter((x) => x !== id) };
       setFavs(next);
       save(FAV_KEY, next);
+      if (type === "trend") sendTrendEvent(id, on ? "favorite" : "unfavorite");
       toast(on ? "お気に入りに追加しました" : "お気に入りから外しました");
     },
     [favs]
@@ -83,6 +86,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // 詳細を開く（コラム以外は「最近見たもの」に記録する）
   const open = useCallback((type: OpenType, id: string) => {
     setModal({ kind: type, id });
+    if (type === "trend" && !viewedTrends.has(id)) {
+      viewedTrends.add(id);
+      sendTrendEvent(id, "view");
+    }
     if (type === "post") return;
     setRecent((list) => {
       const key = `${type}:${id}`;

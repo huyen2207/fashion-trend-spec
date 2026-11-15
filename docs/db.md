@@ -94,7 +94,7 @@ MVPの StyleHer は **データベースを持たない**。表示するデー�
 
 ## 3. テーブル一覧
 
-8つのグループ、34テーブルで構成する。「初期件数」は現在の `data.js` を移したときの件数。
+8つのグループ、36テーブルで構成する。「初期件数」は現在の `data.js` を移したときの件数。
 
 | # | グループ | テーブル名 | 論理名 | 概要 | 対応機能 | 初期件数 |
 |---|---|---|---|---|---|---|
@@ -102,12 +102,12 @@ MVPの StyleHer は **データベースを持たない**。表示するデー�
 | 2 | マスタ | `ages` | 年代 | 20代・30代・40代 | F-02, F-06, F-16 | 3 |
 | 3 | マスタ | `tastes` | テイスト | きれいめ・カジュアルなど | F-06, F-16 | 5 |
 | 4 | マスタ | `categories` | カテゴリー | トップス・アウターなど | F-08 | 7 |
-| 5 | マスタ | `colors` | カラー | 白・黒・ベージュなど | F-08 | 11 |
+| 5 | マスタ | `colors` | カラー | 白・黒・ベージュなど | F-08 | 12 |
 | 6 | マスタ | `post_tags` | コラムのタグ | トレンド・通勤など | F-18 | 4 |
 | 7 | マスタ | `inquiry_types` | お問い合わせの種類 | 掲載内容・不具合など | お問い合わせ | 5 |
 | 8 | ショップ・アイテム | `shops` | ショップ | 人気ショップ・ECサイト | F-10, F-17 | 9 |
-| 9 | ショップ・アイテム | `products` | アイテム | 商品の情報 | F-08, F-09 | 25 |
-| 10 | ショップ・アイテム | `product_links` | 購入リンク | アイテムごとのECサイトへのリンク | F-10 | 50 |
+| 9 | ショップ・アイテム | `products` | アイテム | 商品の情報 | F-08, F-09 | 45 |
+| 10 | ショップ・アイテム | `product_links` | 購入リンク | アイテムごとのECサイトへのリンク | F-10 | 90 |
 | 11 | トレンド | `trends` | トレンド | トレンドの情報 | F-02〜F-04 | 6 |
 | 12 | トレンド | `trend_images` | トレンドの追加画像 | 詳細で出すギャラリー画像 | F-03 | 18 |
 | 13 | トレンド | `trend_points` | トレンドのポイント | 注目ポイント | F-03 | 18 |
@@ -115,23 +115,25 @@ MVPの StyleHer は **データベースを持たない**。表示するデー�
 | 15 | トレンド | `trend_ages` | トレンドの対象年代 | トレンド × 年代 | F-02, F-16 | 15 |
 | 16 | トレンド | `trend_tastes` | トレンドのテイスト | トレンド × テイスト | F-16 | 9 |
 | 17 | トレンド | `trend_products` | トレンドの関連アイテム | トレンド × アイテム | F-03 | 24 |
-| 18 | コーデ | `outfits` | コーデ | コーディネートの情報 | F-05〜F-07 | 25 |
-| 19 | コーデ | `outfit_products` | コーデのアイテム | コーデ × アイテム（主役・サムネイル） | F-07, F-11 | 80 |
-| 20 | コーデ | `outfit_tips` | コーデのコツ | 着こなしのコツ | F-07 | 30 |
-| 21 | コーデ | `outfit_ages` | コーデの対象年代 | コーデ × 年代 | F-06, F-16 | 47 |
-| 22 | コーデ | `outfit_tastes` | コーデのテイスト | コーデ × テイスト | F-06, F-16 | 38 |
-| 23 | コラム・トップページ | `posts` | コラム | コラム記事 | F-18 | 4 |
-| 24 | コラム・トップページ | `post_paragraphs` | コラムの段落 | 記事の本文 | F-18 | 12 |
-| 25 | コラム・トップページ | `hero_slides` | メインビジュアル | トップのスライド | F-01 | 3 |
-| 26 | コラム・トップページ | `community_images` | コミュニティ画像 | コミュニティ告知のギャラリー | （F-23 告知） | 8 |
-| 27 | ユーザー | `users` | ユーザー | 会員 | F-21, F-22 | 0 |
-| 28 | ユーザー | `favorites` | お気に入り | 保存したトレンド・コーデ・アイテム | F-13 | 0 |
-| 29 | ユーザー | `recent_views` | 最近見たもの | 閲覧履歴（1人最大8件） | F-19 | 0 |
-| 30 | ユーザー | `style_profiles` | 診断結果 | 年代・シーン | F-16 | 0 |
-| 31 | ユーザー | `style_profile_tastes` | 診断結果のテイスト | 選んだテイスト（2つまで） | F-16 | 0 |
-| 32 | 受付 | `newsletter_subscriptions` | メールマガジン登録 | 登録メールアドレス | F-20 | 0 |
-| 33 | 受付 | `contact_inquiries` | お問い合わせ | お問い合わせの内容と対応状況 | お問い合わせ | 0 |
-| 34 | 運用 | `audit_logs` | 変更履歴 | 運営者によるマスタ・コンテンツの変更の記録 | F-15, F-22 | 0 |
+| 18 | トレンド | `trend_outfits` | トレンドのコーデ | トレンド × コーデ（詳細のルックブック） | F-02, F-03 | 33 |
+| 19 | トレンド | `trend_daily_stats` | トレンドの日ごとの反応 | 詳細を開いた回数・お気に入りの数（日ごと） | F-02, F-04 | 0 |
+| 20 | コーデ | `outfits` | コーデ | コーディネートの情報 | F-05〜F-07 | 25 |
+| 21 | コーデ | `outfit_products` | コーデのアイテム | コーデ × アイテム（主役・サムネイル） | F-07, F-11 | 59 |
+| 22 | コーデ | `outfit_tips` | コーデのコツ | 着こなしのコツ | F-07 | 50 |
+| 23 | コーデ | `outfit_ages` | コーデの対象年代 | コーデ × 年代 | F-06, F-16 | 47 |
+| 24 | コーデ | `outfit_tastes` | コーデのテイスト | コーデ × テイスト | F-06, F-16 | 41 |
+| 25 | コラム・トップページ | `posts` | コラム | コラム記事 | F-18 | 4 |
+| 26 | コラム・トップページ | `post_paragraphs` | コラムの段落 | 記事の本文 | F-18 | 12 |
+| 27 | コラム・トップページ | `hero_slides` | メインビジュアル | トップのスライド | F-01 | 3 |
+| 28 | コラム・トップページ | `community_images` | コミュニティ画像 | コミュニティ告知のギャラリー | （F-23 告知） | 8 |
+| 29 | ユーザー | `users` | ユーザー | 会員 | F-21, F-22 | 0 |
+| 30 | ユーザー | `favorites` | お気に入り | 保存したトレンド・コーデ・アイテム | F-13 | 0 |
+| 31 | ユーザー | `recent_views` | 最近見たもの | 閲覧履歴（1人最大8件） | F-19 | 0 |
+| 32 | ユーザー | `style_profiles` | 診断結果 | 年代・シーン | F-16 | 0 |
+| 33 | ユーザー | `style_profile_tastes` | 診断結果のテイスト | 選んだテイスト（2つまで） | F-16 | 0 |
+| 34 | 受付 | `newsletter_subscriptions` | メールマガジン登録 | 登録メールアドレス | F-20 | 0 |
+| 35 | 受付 | `contact_inquiries` | お問い合わせ | お問い合わせの内容と対応状況 | お問い合わせ | 0 |
+| 36 | 運用 | `audit_logs` | 変更履歴 | 運営者によるマスタ・コンテンツの変更の記録 | F-15, F-22 | 0 |
 
 ---
 
@@ -230,9 +232,8 @@ MVPの StyleHer は **データベースを持たない**。表示するデー�
 | `name` | トレンド名 | varchar(50) | ○ | | | |
 | `subtitle` | サブタイトル | varchar(100) | ○ | | | 現在の `sub` |
 | `image` | メイン画像 | varchar(255) | ○ | | | |
-| `hot_score` | 注目度 | smallint | ○ | | | 0〜100。現在の `hot` |
+| `hot_score` | 注目度の基準値 | smallint | ○ | | | 0〜100。運営者が決める値（現在の `hot`）。画面に出す注目度は、これに直近7日の反応を足して計算する（7.1） |
 | `season` | 旬の時期 | varchar(30) | ○ | | | 例：2026秋冬、通年 |
-| `post_count` | コーデ件数（表示用） | integer | ○ | `0` | | カードに出す件数。DBに登録したコーデの件数とは別の値（現在の `posts`） |
 | `description` | 説明 | text | ○ | | | 現在の `desc` |
 | `sort_order` | 並び順 | integer | ○ | `0` | | 一覧の並びと「今日の注目」の順番に使う（7.1） |
 | 共通列 | | | | | | `is_published` / `created_at` / `updated_at` |
@@ -273,6 +274,27 @@ MVPの StyleHer は **データベースを持たない**。表示するデー�
 | `trend_id` | トレンドID | code_id | ○ | | PK, FK→`trends` | |
 | `product_id` | アイテムID | code_id | ○ | | PK, FK→`products` | |
 | `sort_order` | 表示順 | smallint | ○ | `0` | | 「このトレンドのアイテム」の並び |
+
+#### `trend_outfits`（トレンドのコーデ）
+
+トレンドの詳細に出すルックブック。カードの「◯件のコーデ」は、ここにある公開中のコーデの件数（7.1）。
+
+| 列名 | 論理名 | 型 | 必須 | 初期値 | キー | 説明 |
+|---|---|---|---|---|---|---|
+| `trend_id` | トレンドID | code_id | ○ | | PK, FK→`trends` | |
+| `outfit_id` | コーデID | code_id | ○ | | PK, FK→`outfits` | |
+| `sort_order` | 表示順 | smallint | ○ | `0` | | ルックブックの並び |
+
+#### `trend_daily_stats`（トレンドの日ごとの反応）
+
+注目度の計算（7.1）に使う。ログインしていない人の反応も数えるため、だれが反応したかは持たず、回数だけを持つ。
+
+| 列名 | 論理名 | 型 | 必須 | 初期値 | キー | 説明 |
+|---|---|---|---|---|---|---|
+| `trend_id` | トレンドID | code_id | ○ | | PK, FK→`trends` | |
+| `stat_date` | 日付 | date | ○ | | PK | 日本時間の日付 |
+| `view_count` | 詳細を開いた回数 | integer | ○ | `0` | | 0以上。同じ人がページを開いている間に何度開いても1回 |
+| `favorite_count` | お気に入りの数 | integer | ○ | `0` | | お気に入りにしたら＋1、外したら－1。日によってはマイナスになる |
 
 ### 4.4 コーデ
 
@@ -492,11 +514,11 @@ Next.js 版のお問い合わせフォームは、現在はフォーム受付サ
 
 | 削除時の動き | 対象の外部キー | 理由 |
 |---|---|---|
-| **CASCADE**（一緒に消す） | `product_links.product_id`、`trend_images` / `trend_points` / `trend_tips` / `trend_ages` / `trend_tastes` / `trend_products` の `trend_id`、`outfit_products` / `outfit_tips` / `outfit_ages` / `outfit_tastes` の `outfit_id`、`post_paragraphs.post_id` | 親の一部なので、親と一緒に消す |
+| **CASCADE**（一緒に消す） | `product_links.product_id`、`trend_images` / `trend_points` / `trend_tips` / `trend_ages` / `trend_tastes` / `trend_products` / `trend_outfits` / `trend_daily_stats` の `trend_id`、`outfit_products` / `outfit_tips` / `outfit_ages` / `outfit_tastes` の `outfit_id`、`post_paragraphs.post_id` | 親の一部なので、親と一緒に消す |
 | **CASCADE**（一緒に消す） | `favorites` / `recent_views` / `style_profiles` の `user_id`、`style_profile_tastes.user_id` | 退会したら本人のデータを残さない |
 | **CASCADE**（一緒に消す） | `favorites` / `recent_views` の `trend_id` / `outfit_id` / `product_id` | コンテンツは通常は削除しない（非公開にする）が、削除した場合はお気に入り・履歴からも消す |
 | **SET NULL**（空にする） | `contact_inquiries.user_id`、`audit_logs.user_id` | 対応・変更の記録は残し、退会した本人とのつながりだけ外す |
-| **RESTRICT**（消せない） | 上記以外すべて。マスタへの参照（`category_id`、`color_id`、`scene_id`、`age_id`、`taste_id`、`tag_id`、`inquiry_type_id`）、`products.recommended_shop_id`、`product_links.shop_id`、`trend_products.product_id`、`outfit_products.product_id` | 使われているものを消すと画面が壊れるため、DBが削除を止める |
+| **RESTRICT**（消せない） | 上記以外すべて。マスタへの参照（`category_id`、`color_id`、`scene_id`、`age_id`、`taste_id`、`tag_id`、`inquiry_type_id`）、`products.recommended_shop_id`、`product_links.shop_id`、`trend_products.product_id`、`trend_outfits.outfit_id`、`outfit_products.product_id` | 使われているものを消すと画面が壊れるため、DBが削除を止める |
 | **NO ACTION・コミット時に確認** | `fk_products_recommended_link`（`products (id, recommended_shop_id)` → `product_links`） | アイテムと購入リンクを同じトランザクションで登録できるようにする。おすすめのショップの購入リンクだけを消すことはできない（アイテムごと消すときは一緒に消える） |
 
 ---
@@ -520,6 +542,8 @@ Next.js 版のお問い合わせフォームは、現在はフォーム受付サ
 | `trends` | `idx_trends_sort_order` | `sort_order` | トレンド一覧・今日の注目の順番（F-02, F-04） |
 | `trend_ages` / `trend_tastes` | `idx_trend_ages_age_id` / `idx_trend_tastes_taste_id` | `age_id` / `taste_id` | 年代・テイストからトレンドを探す（診断） |
 | `trend_products` | `idx_trend_products_product_id` | `product_id` | 「このアイテムが入っているトレンド」（F-09） |
+| `trend_outfits` | `idx_trend_outfits_outfit_id` | `outfit_id` | コーデ削除時の確認 |
+| `trend_daily_stats` | `idx_trend_daily_stats_stat_date` | `stat_date` | 直近7日の反応を集計する（7.1） |
 | `outfits` | `idx_outfits_scene_id_sort_order` | `scene_id, sort_order` | シーンで絞り込んで並び順に出す（F-05、7.4） |
 | `outfit_products` | `idx_outfit_products_product_id` | `product_id` | 着回し数・「このアイテムを使ったコーデ」（F-11） |
 | `outfit_products` | `uq_outfit_products_main`（一意・部分） | `outfit_id`（`role = 'main'` の行のみ） | 主役アイテムを1コーデ1つまでにする |
@@ -548,6 +572,8 @@ Next.js 版のお問い合わせフォームは、現在はフォーム受付サ
 | 値 | 求め方 | 計算する場所 |
 |---|---|---|
 | 今日の注目トレンド（F-04） | 公開中のトレンドを `sort_order` 順に並べ、「1970年1月1日からの日数 ÷ 件数」の余りの番目 | 画面（閲覧者の日付で切り替えるため、現在と同じ） |
+| トレンドの注目度（F-02） | `hot_score` と直近7日の `trend_daily_stats` から計算（7.1） | アプリ（`lib/api/catalog.ts`） |
+| トレンドのコーデ件数（F-02） | `trend_outfits` のうち、公開中のコーデの件数 | アプリ（同上） |
 | コーデの合計金額（F-07） | `outfit_products` のアイテムの `price` の合計 | SQL（7.2） |
 | 着回し数（F-11） | `outfit_products` をアイテムごとに数える | SQL（7.2） |
 | 購入リンクのURL（F-10） | `custom_url`、なければショップの検索URLの型 ＋ 検索キーワード | SQL で材料を取り出し、アプリでURLにする（7.3） |
@@ -557,15 +583,40 @@ Next.js 版のお問い合わせフォームは、現在はフォーム受付サ
 
 以下のSQLは、付録AのDDLに現在の `lib/data.ts` の全データを入れて実行し、**画面の計算結果（`outfitPrice`・`wearCount`・購入リンクのURLと並び・コーデの絞り込み・診断のおすすめ）と全件一致すること** を確認している。
 
-### 7.1 今日の注目トレンド
+### 7.1 今日の注目トレンドと注目度
 
-画面で計算する。DBからは、公開中のトレンドを並び順で取り出すだけでよい。
+**今日の注目** は画面で計算する。DBからは、公開中のトレンドを並び順で取り出すだけでよい。
 
 ```sql
 SELECT id, name FROM trends WHERE is_published ORDER BY sort_order;
 ```
 
 トレンドを追加・非公開にすると件数が変わり、翌日以降の順番もずれる（毎日違うトレンドが出る点は変わらない）。
+
+**注目度**（カードの「↗ ◯%」）は、閲覧者の反応から計算する。トレンド一覧は「今日の注目」を先頭に、あとは注目度の高い順に並べる。
+
+1. 閲覧者がトレンドの詳細を開くと `view_count` に＋1、ハートを付けると `favorite_count` に＋1（外すと－1）する（API B-04）。
+2. 直近7日（日本時間・今日を含む）の回数をトレンドごとに足し、点数を出す。
+   点数 ＝ `hot_score` ÷ 100 × 30 ＋ 詳細を開いた回数 ＋ お気に入りの数（0未満は0）× 3
+   （`hot_score` は「30点分の反応」として足す。反応が少ないうちに、数回の操作で順位が大きく入れ替わらないようにするため）
+3. 公開中のトレンドのうち、いちばん点数の高いものを 100% とし、ほかはその割合（四捨五入）にする。
+
+```sql
+SELECT trend_id, sum(view_count) AS views, sum(favorite_count) AS favorites
+FROM trend_daily_stats
+WHERE stat_date >= (now() AT TIME ZONE 'Asia/Tokyo')::date - 6
+GROUP BY trend_id;
+```
+
+**コーデ件数**（カードの「◯件のコーデ」）は、`trend_outfits` のうち公開中のコーデの件数。
+
+```sql
+SELECT t.id, count(o.id) AS post_count
+FROM trends t
+LEFT JOIN trend_outfits x ON x.trend_id = t.id
+LEFT JOIN outfits o ON o.id = x.outfit_id AND o.is_published
+GROUP BY t.id;
+```
 
 ### 7.2 コーデの合計金額・着回し数
 
@@ -677,9 +728,10 @@ LIMIT 4;
 | `products[].links` | `product_links` | 1アイテムにつき、楽天市場・Amazon の2行。URLは型から作れるので `custom_url` は空にする。`products` と同じトランザクションで登録する |
 | `products[].url` | （持たない） | 7.3 で求める |
 | 配列の順番 | `products.sort_order` | 「おすすめ順」になる |
-| `trends[].sub` / `hot` / `posts` / `desc` | `trends.subtitle` / `hot_score` / `post_count` / `description` | 列名を変えるだけ |
+| `trends[].sub` / `hot` / `desc` | `trends.subtitle` / `hot_score` / `description` | 列名を変えるだけ |
 | `trends[].gallery` / `points` / `tips` | `trend_images` / `trend_points` / `trend_tips` | 配列の1要素を1行に。順番を `sort_order`（1から）にする |
 | `trends[].ages` / `tastes` / `products` | `trend_ages` / `trend_tastes` / `trend_products` | 配列の1要素を1行に |
+| `trends[].outfits` | `trend_outfits` | 配列の1要素を1行に。順番を `sort_order`（1から）にする |
 | `outfits[].scene` / `desc` | `outfits.scene_id` / `description` | 列名を変えるだけ |
 | `outfits[].main` | `outfit_products`（`role = 'main'`、`sort_order = 0`） | ある場合のみ |
 | `outfits[].items` | `outfit_products`（`role = 'item'`） | 順番を `sort_order`（1から）にする |
@@ -710,8 +762,8 @@ C＝登録、R＝参照、U＝更新、D＝削除。コンテンツの登録・�
 | 機能 | 参照（R） | 登録・更新・削除（C/U/D） |
 |---|---|---|
 | F-01 トップページ | `hero_slides`, `trends`, `outfits`, `products`, `shops`, `posts`, `community_images` | — |
-| F-02 トレンド一覧 | `trends`, `trend_ages`, `ages` | — |
-| F-03 トレンド詳細 | `trends`, `trend_images`, `trend_points`, `trend_tips`, `trend_ages`, `trend_products`, `products`, `outfits` | `recent_views`（C/U/D） |
+| F-02 トレンド一覧 | `trends`, `trend_ages`, `ages`, `trend_outfits`, `trend_daily_stats` | — |
+| F-03 トレンド詳細 | `trends`, `trend_images`, `trend_points`, `trend_tips`, `trend_ages`, `trend_products`, `trend_outfits`, `products`, `outfits` | `recent_views`（C/U/D）、`trend_daily_stats`（C/U） |
 | F-04 今日の注目トレンド | `trends` | — |
 | F-05・F-06 シーン別コーデ・絞り込み | `outfits`, `outfit_ages`, `outfit_tastes`, `outfit_products`, `scenes`, `ages`, `tastes` | — |
 | F-07 コーデ詳細 | `outfits`, `outfit_products`, `outfit_tips`, `products`, `product_links` | `recent_views`（C/U/D） |
@@ -814,7 +866,7 @@ v0.1 を、要件定義（F-01〜F-26）と次の4つの観点で見直した。
 | 1 | WHERE・ORDER BY に合ったインデックスか | シーン別コーデ（`scene_id` で絞って `sort_order` で並べる）、アイテム一覧（カテゴリーで絞って価格順）、トレンド一覧（`sort_order` 順）に合うインデックスがなかった | `idx_outfits_scene_id_sort_order`、`idx_products_category_id_price`、`idx_products_sort_order`、`idx_trends_sort_order` を追加（`scene_id`・`category_id` だけのインデックスは複合インデックスに置き換え） |
 | 2 | JOIN に使う外部キーの列 | 診断結果（`style_profiles`・`style_profile_tastes`）のマスタへの外部キーにインデックスがなかった | 3つ追加 |
 | 3 | 正規化しすぎて JOIN が多すぎないか | トレンド詳細は7テーブルを読む。ただし、どれも主キーの先頭（`trend_id`）で1件分だけを読むため速く、データも少ない。配列の列（`text[]`）にまとめると JOIN は減るが、第1正規形を満たさなくなり、検索や部分的な更新がしにくくなる | 子テーブルのまま（変更なし）。件数が増えて問題が出たら、詳細画面用のビューを作って1回のクエリで読めるようにする |
-| 4 | 非正規化による更新時の不整合 | `product_links.url`（13.1 #1）のみ | 対応済み。`trends.post_count` は運営者が決める表示用の数字で、コーデの件数から計算する値ではないため、そのまま持つ。お問い合わせの `name`・`email` は送った時点の記録なので、そのまま持つ |
+| 4 | 非正規化による更新時の不整合 | `product_links.url`（13.1 #1）のみ | 対応済み。`trends.post_count`（運営者が決める表示用の数字）は v0.3 で消し、`trend_outfits` から数えるようにした。お問い合わせの `name`・`email` は送った時点の記録なので、そのまま持つ |
 
 ### 13.3 命名規則と一貫性
 
@@ -847,7 +899,7 @@ v0.1 を、要件定義（F-01〜F-26）と次の4つの観点で見直した。
 
 ## 付録A. DDL（PostgreSQL）
 
-本書のテーブル定義をSQLにしたもの。空のデータベースで上から順に実行すると、34テーブル・インデックス・トリガーがすべて作られる。
+本書のテーブル定義をSQLにしたもの。空のデータベースで上から順に実行すると、36テーブル・インデックス・トリガーがすべて作られる。
 
 ```sql
 -- ===== 共通：文字列ID（英小文字・数字・_ のみ、30文字まで） =====
@@ -985,7 +1037,6 @@ CREATE TABLE trends (
   image        varchar(255) NOT NULL,
   hot_score    smallint     NOT NULL CONSTRAINT ck_trends_hot_score CHECK (hot_score BETWEEN 0 AND 100),
   season       varchar(30)  NOT NULL,
-  post_count   integer      NOT NULL DEFAULT 0 CONSTRAINT ck_trends_post_count CHECK (post_count >= 0),
   description  text         NOT NULL,
   sort_order   integer      NOT NULL DEFAULT 0,
   is_published boolean      NOT NULL DEFAULT true,
@@ -1084,6 +1135,25 @@ CREATE TABLE outfit_tastes (
   PRIMARY KEY (outfit_id, taste_id)
 );
 CREATE INDEX idx_outfit_tastes_taste_id ON outfit_tastes (taste_id);
+
+-- トレンドのコーデ（コーデを作ったあとに作る）
+CREATE TABLE trend_outfits (
+  trend_id   code_id  NOT NULL REFERENCES trends (id) ON DELETE CASCADE,
+  outfit_id  code_id  NOT NULL REFERENCES outfits (id) ON DELETE RESTRICT,
+  sort_order smallint NOT NULL DEFAULT 0,
+  PRIMARY KEY (trend_id, outfit_id)
+);
+CREATE INDEX idx_trend_outfits_outfit_id ON trend_outfits (outfit_id);
+
+-- トレンドの日ごとの反応（注目度の計算に使う。7.1）
+CREATE TABLE trend_daily_stats (
+  trend_id       code_id NOT NULL REFERENCES trends (id) ON DELETE CASCADE,
+  stat_date      date    NOT NULL,
+  view_count     integer NOT NULL DEFAULT 0 CONSTRAINT ck_trend_daily_stats_view_count CHECK (view_count >= 0),
+  favorite_count integer NOT NULL DEFAULT 0,
+  PRIMARY KEY (trend_id, stat_date)
+);
+CREATE INDEX idx_trend_daily_stats_stat_date ON trend_daily_stats (stat_date);
 
 -- ===== 5. コラム・トップページ =====
 CREATE TABLE posts (
@@ -1280,7 +1350,7 @@ BEGIN
   FOREACH t IN ARRAY ARRAY[
     'scenes', 'ages', 'tastes', 'categories', 'colors', 'post_tags', 'inquiry_types',
     'shops', 'products', 'product_links',
-    'trends', 'trend_images', 'trend_points', 'trend_tips', 'trend_ages', 'trend_tastes', 'trend_products',
+    'trends', 'trend_images', 'trend_points', 'trend_tips', 'trend_ages', 'trend_tastes', 'trend_products', 'trend_outfits',
     'outfits', 'outfit_products', 'outfit_tips', 'outfit_ages', 'outfit_tastes',
     'posts', 'post_paragraphs', 'hero_slides', 'community_images'
   ]
@@ -1338,7 +1408,8 @@ INSERT INTO colors (id, name, sort_order) VALUES
   ('floral', '花柄',     8),
   ('pink',   'ピンク',   9),
   ('brown',  'ブラウン', 10),
-  ('gold',   'ゴールド', 11);
+  ('gold',   'ゴールド', 11),
+  ('green',  'グリーン', 12);
 
 INSERT INTO post_tags (id, name, sort_order) VALUES
   ('trend',     'トレンド',   1),
@@ -1373,3 +1444,4 @@ INSERT INTO shops (id, name, url, shop_type, search_url_template, sort_order) VA
 |---|---|---|
 | v0.1 | 2026年9月29日 | 初版作成（現在の `data.js` / `lib/data.ts` と localStorage の構造、設計書 v0.1 にもとづく） |
 | v0.2 | 2026年9月29日 | 設計レビューを反映（13章）。購入リンクのURLを計算で求める形に変更、制約・インデックス・マスタの論理削除とタイムスタンプ・変更履歴（`audit_logs`）を追加 |
+| v0.3 | 2026年11月15日 | トレンドの注目度とコーデ件数を実際のデータから計算する形に変更（7.1）。`trend_outfits`・`trend_daily_stats` を追加し、`trends.post_count` を削除。コーデとアイテムの内容を写真に合わせて直し、アイテムを20件・カラー（グリーン）を1件追加 |

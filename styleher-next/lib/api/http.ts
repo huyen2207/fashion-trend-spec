@@ -58,6 +58,7 @@ export const RATE_LIMITS = {
   member: { name: "member", limit: 60, windowSec: 60, by: "user" },
   contact: { name: "contact", limit: 5, windowSec: 600, by: "ip" },
   newsletter: { name: "newsletter", limit: 5, windowSec: 600, by: "ip" },
+  trendEvent: { name: "trendEvent", limit: 60, windowSec: 600, by: "ip" },
 } satisfies Record<string, RateLimit>;
 
 function hitRateLimit(rule: RateLimit, key: string): Record<string, string> {

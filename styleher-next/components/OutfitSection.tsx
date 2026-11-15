@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { qs, useApi, useMasters, type List, type OutfitSummary } from "@/lib/client/api";
-import { img, money } from "@/lib/utils";
+import { cn, img, money } from "@/lib/utils";
 import { FilterSelect } from "./FilterSelect";
 import { SCENE_ICONS } from "./icons";
 import { Stagger, StaggerItem } from "./motion";
@@ -80,13 +80,16 @@ export function OutfitSection() {
                   {list.map((o) => (
                     <StaggerItem key={o.id}>
                       <OpenCard type="outfit" id={o.id} label={`コーデ「${o.title}」を見る`} className="h-full">
-                        <div className="grid aspect-[4/3.6] grid-cols-[2fr_1fr] gap-1 p-1">
+                        {/* 写真の主役だけのコーデ（サムネイルのアイテムがない）は、写真を横いっぱいに出す */}
+                        <div className={cn("grid aspect-[4/3.6] grid-rows-[minmax(0,1fr)] gap-1 overflow-hidden p-1", o.items.length > 0 && "grid-cols-[2fr_1fr]")}>
                           <img src={img(o.image, 420, 590)} alt={o.title} loading="lazy" className="size-full rounded-lg object-cover" />
-                          <div className="grid grid-rows-3 gap-1">
-                            {o.items.map((p) => (
-                              <img key={p.id} src={img(p.image, 160, 160)} alt={p.name} loading="lazy" className="size-full rounded-md object-cover" />
-                            ))}
-                          </div>
+                          {o.items.length > 0 && (
+                            <div className="grid gap-1" style={{ gridTemplateRows: `repeat(${o.items.length}, minmax(0, 1fr))` }}>
+                              {o.items.map((p) => (
+                                <img key={p.id} src={img(p.image, 160, 160)} alt={p.name} loading="lazy" className="size-full rounded-md object-cover" />
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-start justify-between gap-2 p-3">
                           <div>

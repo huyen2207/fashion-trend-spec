@@ -19,7 +19,7 @@ const DEV_USERS = {
 // 現在の data.ts は色名・ショップ名・タグ名を直接持っているので、IDに置き換える（docs/db.md 付録B と同じ）
 const COLOR_IDS: Record<string, string> = {
   白: "white", グレー: "gray", ベージュ: "beige", 黒: "black", 生成り: "kinari", キャメル: "camel",
-  ブルー: "blue", 花柄: "floral", ピンク: "pink", ブラウン: "brown", ゴールド: "gold",
+  ブルー: "blue", 花柄: "floral", ピンク: "pink", ブラウン: "brown", ゴールド: "gold", グリーン: "green",
 };
 const SHOP_IDS: Record<string, string> = {
   UNIQLO: "uniqlo", GU: "gu", ZOZOTOWN: "zozotown", "Rakuten Fashion": "rakuten_fashion", しまむら: "shimamura",
@@ -43,12 +43,12 @@ const INQUIRY_TYPES = [
   { id: "other", name: "その他" },
 ];
 
-// 付録A の34テーブル（_prisma_migrations は消さない）
+// 付録A の36テーブル（_prisma_migrations は消さない）
 const TABLES = [
   "audit_logs", "contact_inquiries", "newsletter_subscriptions", "style_profile_tastes", "style_profiles",
   "recent_views", "favorites", "users", "community_images", "hero_slides", "post_paragraphs", "posts",
   "outfit_tastes", "outfit_ages", "outfit_tips", "outfit_products", "outfits",
-  "trend_products", "trend_tastes", "trend_ages", "trend_tips", "trend_points", "trend_images", "trends",
+  "trend_daily_stats", "trend_outfits", "trend_products", "trend_tastes", "trend_ages", "trend_tips", "trend_points", "trend_images", "trends",
   "product_links", "products", "shops", "inquiry_types", "post_tags", "colors", "categories", "tastes", "ages", "scenes",
 ];
 
@@ -115,7 +115,6 @@ async function main() {
           image: t.img,
           hotScore: t.hot,
           season: t.season,
-          postCount: t.posts,
           description: t.desc,
           sortOrder: i + 1,
         })),
@@ -142,6 +141,10 @@ async function main() {
       await tx.outfitTip.createMany({ data: data.outfits.flatMap((o) => o.tips.map((body, i) => ({ outfitId: o.id, sortOrder: i + 1, body }))) });
       await tx.outfitAge.createMany({ data: data.outfits.flatMap((o) => o.ages.map((ageId) => ({ outfitId: o.id, ageId }))) });
       await tx.outfitTaste.createMany({ data: data.outfits.flatMap((o) => o.tastes.map((tasteId) => ({ outfitId: o.id, tasteId }))) });
+      // トレンドのコーデ（コーデを入れたあとに）
+      await tx.trendOutfit.createMany({
+        data: data.trends.flatMap((t) => t.outfits.map((outfitId, i) => ({ trendId: t.id, outfitId, sortOrder: i + 1 }))),
+      });
 
       // コラム・トップページ
       await tx.post.createMany({
