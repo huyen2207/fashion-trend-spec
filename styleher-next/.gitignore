@@ -9,3 +9,6 @@ next-env.d.ts
 # 接続文字列などの秘密情報（.env.example だけをコミットする）
 .env
 .env*.local
+
+# ログのファイル（LOG_DIR）
+/logs

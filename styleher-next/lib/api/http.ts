@@ -2,6 +2,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { Prisma } from "@/lib/generated/prisma/client";
+import { logger } from "@/lib/logger";
 import { authenticate } from "./auth";
 import { clientIp, countHit } from "./rateLimit";
 import type { UserRow } from "./catalog";
@@ -95,9 +96,12 @@ export function api(fn: (c: Ctx) => Promise<Response> | Response, options: Optio
   return async (req, ctx) => {
     const requestId = req.headers.get("x-request-id") || `req_${randomUUID().replaceAll("-", "")}`;
     const started = Date.now();
+    const method = req.method;
+    const path = req.nextUrl.pathname;
+    let user: UserRow | null = null;
     let res: Response;
     try {
-      const user = auth === "none" ? null : await authenticate(auth);
+      user = auth === "none" ? null : await authenticate(auth);
       const rule = options.rateLimit ?? (auth === "member" || auth === "admin" ? RATE_LIMITS.member : RATE_LIMITS.public);
       const rateHeaders = hitRateLimit(rule, rule.by === "user" && user ? user.id : clientIp(req));
       // [...path] のような配列のパラメーターは "/" でつなぐ
@@ -110,18 +114,33 @@ export function api(fn: (c: Ctx) => Promise<Response> | Response, options: Optio
       if (cache === "public") res.headers.set("CDN-Cache-Control", PUBLIC_CDN_CACHE);
       if (cache === "public" && res.status === 200) res = await withEtag(req, res);
     } catch (e) {
-      res = errorResponse(e, requestId);
+      res = errorResponse(e, { requestId, method, path, userId: user?.id });
     }
     res.headers.set("X-Request-Id", requestId);
-    // ログには個人情報（メールアドレス・お問い合わせ内容・トークン）を書かない（3.11）
-    console.log(`[api] ${requestId} ${req.method} ${req.nextUrl.pathname} ${res.status} ${Date.now() - started}ms`);
+    // ログには個人情報（メールアドレス・お問い合わせ内容・トークン）を書かない。パスだけ残し、クエリは残さない（3.11）
+    const durationMs = Date.now() - started;
+    logger.access({ requestId, method, path, status: res.status, durationMs, userId: user?.id });
+    if (durationMs >= SLOW_MS) logger.warn("レスポンスが遅い", { requestId, method, path, status: res.status, durationMs });
     return res;
   };
 }
 
-function errorResponse(e: unknown, requestId: string): Response {
+// この時間（ミリ秒）以上かかったら warn を出す
+const SLOW_MS = 3000;
+// 4xx のうち、warn を出すものと、そのときのログの文（ふだんの操作でも起きる 400・401・404 などは access のログだけにする）
+const WARN_CODES: Record<string, string> = {
+  FORBIDDEN: "権限のない操作をしようとしました",
+  PAYLOAD_TOO_LARGE: "本文が大きすぎます",
+  TOO_MANY_REQUESTS: "回数の制限を超えました",
+};
+
+type ReqInfo = { requestId: string; method: string; path: string; userId?: string };
+
+function errorResponse(e: unknown, info: ReqInfo): Response {
+  const { requestId } = info;
   if (e instanceof ApiError) {
     const { details, meta, headers } = e.extra;
+    if (WARN_CODES[e.code]) logger.warn(WARN_CODES[e.code], { ...info, status: e.status, code: e.code });
     return json(
       { error: { code: e.code, message: e.message, requestId, ...(details && { details }), ...(meta && { meta }) } },
       e.status,
@@ -129,14 +148,16 @@ function errorResponse(e: unknown, requestId: string): Response {
     );
   }
   // 一意制約の違反（同時に同じIDで登録したときなど）は 409
-  if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")
+  if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+    logger.warn("一意制約の違反", { ...info, status: 409, code: "CONFLICT", target: e.meta?.target });
     return json(
       { error: { code: "CONFLICT", message: "同じ内容がすでに登録されています。", requestId } },
       409,
       { "Cache-Control": "no-store" }
     );
-  // 詳しい内容は返さず、ログにだけ残す
-  console.error(`[api] ${requestId} 予期しないエラー`, e);
+  }
+  // 詳しい内容は返さず、ログにだけ残す（Discord にも通知する）
+  void logger.error("API で予期しないエラーが発生しました", { ...info, status: 500 }, e);
   return json(
     { error: { code: "INTERNAL_ERROR", message: "サーバーでエラーが発生しました。時間をおいて、もう一度お試しください。", requestId } },
     500,
