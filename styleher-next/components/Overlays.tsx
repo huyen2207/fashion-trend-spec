@@ -181,6 +181,30 @@ function Gallery({ images }: { images: { src: string; alt: string }[] }) {
   );
 }
 
+// トレンドの写真：選んだ1枚を大きく、全部の写真を下に小さく並べる（押すと大きい写真が切り替わる）
+function PhotoGallery({ images, alt }: { images: string[]; alt: string }) {
+  const [current, setCurrent] = useState(0);
+  return (
+    <div>
+      <img src={img(images[current] ?? images[0], 700, 630)} alt={alt} className="aspect-[10/9] w-full rounded-xl object-cover" />
+      <div className="mt-2 grid grid-cols-5 gap-2 sm:grid-cols-7 md:grid-cols-5">
+        {images.map((g, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setCurrent(i)}
+            aria-label={`${alt}の写真 ${i + 1}枚目を見る`}
+            aria-pressed={i === current}
+            className={`overflow-hidden rounded-lg ring-offset-2 ring-offset-background transition ${i === current ? "ring-2 ring-rose" : "opacity-70 hover:opacity-100"}`}
+          >
+            <img src={img(g, 160, 210)} alt="" loading="lazy" className="aspect-[3/4] w-full object-cover" />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // M-01 トレンド詳細（A-03）
 function TrendDetail({ id }: { id: string }) {
   const { todayTrendId } = useStore();
@@ -190,7 +214,7 @@ function TrendDetail({ id }: { id: string }) {
   return (
     <div>
       <div className="grid gap-6 md:grid-cols-2">
-        <Gallery images={[t.image, ...t.images].slice(0, 4).map((g, i) => ({ src: img(g, i ? 300 : 700, i ? 400 : 630), alt: t.name }))} />
+        <PhotoGallery images={[t.image, ...t.images]} alt={t.name} />
         <div>
           <Kicker>TREND {t.id === todayTrendId && "· 今日の注目"}</Kicker>
           <DialogTitle className="mt-1 font-serif text-3xl">{t.name}</DialogTitle>

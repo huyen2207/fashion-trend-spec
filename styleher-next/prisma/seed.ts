@@ -19,7 +19,7 @@ const DEV_USERS = {
 // 現在の data.ts は色名・ショップ名・タグ名を直接持っているので、IDに置き換える（docs/db.md 付録B と同じ）
 const COLOR_IDS: Record<string, string> = {
   白: "white", グレー: "gray", ベージュ: "beige", 黒: "black", 生成り: "kinari", キャメル: "camel",
-  ブルー: "blue", 花柄: "floral", ピンク: "pink", ブラウン: "brown", ゴールド: "gold", グリーン: "green",
+  ブルー: "blue", 花柄: "floral", ピンク: "pink", ブラウン: "brown", ゴールド: "gold", グリーン: "green", ネイビー: "navy", チェック: "check",
 };
 const SHOP_IDS: Record<string, string> = {
   UNIQLO: "uniqlo", GU: "gu", ZOZOTOWN: "zozotown", "Rakuten Fashion": "rakuten_fashion", しまむら: "shimamura",
